@@ -1,10 +1,15 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import os
+from bson import ObjectId
+from groq import Groq
+from system_params import system_prompt_eval
+import json
 
 load_dotenv()
 
 uri = os.getenv("MONGODB_URI")
+groqclient = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # Create a new client and connect to the server
 client = AsyncIOMotorClient(uri)

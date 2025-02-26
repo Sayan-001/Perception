@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "./ui/badge";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/axios";
+import { toast } from "sonner";
 
 interface QPCardProps {
   id: string;
@@ -36,12 +37,13 @@ export function QPCard({
   const handleEvaluateClick = async () => {
     setEvaluateLoading(true);
     try {
-      const response = await api.put(`/evaluation/${id}`);
-      // Handle successful evaluation
-      router.refresh(); // Refresh the page to show updated status
+      const response = await api.put(`/evaluate/${id}`);
+      router.refresh();
+
+      toast.success("Evaluation successful");
     } catch (error) {
       console.error("Evaluation failed:", error);
-      // Add error toast notification here
+      toast.error("Evaluation failed");
     } finally {
       setEvaluateLoading(false);
     }
@@ -55,6 +57,17 @@ export function QPCard({
       console.error("Navigation failed:", error);
     } finally {
       setViewLoading(false);
+    }
+  };
+
+  const handleResetClick = async () => {
+    try {
+      await api.put(`/reset/${id}`);
+      router.refresh();
+      toast.success("Evaluation reset");
+    } catch (error) {
+      console.error("Reset failed:", error);
+      toast.error("Reset failed");
     }
   };
 
@@ -76,8 +89,13 @@ export function QPCard({
           {viewLoading ? "Loading..." : "View"}
         </Button>
         {user_type === "teacher" && (
+          <Button variant="destructive" onClick={handleResetClick}>
+            Reset Evaluation
+          </Button>
+        )}
+        {user_type === "teacher" && (
           <Button
-            variant="destructive"
+            variant="outline"
             onClick={handleEvaluateClick}
             disabled={evaluateLoading || evaluated}
           >

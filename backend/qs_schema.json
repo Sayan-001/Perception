@@ -1,0 +1,195 @@
+{
+  "_id": {
+    "$oid": "67bad1e303c9379613ffc316"
+  },
+  "teacher_email": "sks@gmail.com",
+  "evaluated": false,
+  "expired": false,
+  "questions": [
+    {
+      "order": 1,
+      "question": "What is a Class?",
+      "answer": "A class is a building block of Object Oriented Programs. It is a user-defined data type that contains the data members and member functions that operate on the data members. It is like a blueprint or template of objects having common properties and methods."
+    },
+    {
+      "order": 2,
+      "question": "What is Compile-Time Polymorphism?",
+      "answer": "Compile time polymorphism, also known as static polymorphism or early binding is the type of polymorphism where the binding of the call to its code is done at the compile time. Method overloading or operator overloading are examples of compile-time polymorphism."
+    },
+    {
+      "order": 3,
+      "question": "What is the difference between overloading and overriding?",
+      "answer": "A compile-time polymorphism feature called overloading allows an entity to have numerous implementations of the same name. Method overloading and operator overloading are two examples. Overriding is a form of runtime polymorphism where an entity with the same name but a different implementation is executed. It is implemented with the help of virtual functions."
+    },
+    {
+      "order": 4,
+      "question": "What is the virtual function?",
+      "answer": "A virtual function is a function that is used to override a method of the parent class in the derived class. It is used to provide abstraction in a class."
+    }
+  ],
+  "submissions": [
+    {
+      "student_email": "sayan@gmail.com",
+      "answers": [
+        {
+          "order": 1,
+          "answer": "A class is a blueprint for creating objects in object-oriented programming, defining attributes (data members) and behaviors (methods).",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 2,
+          "answer": "Since compile-time polymorphism is resolved during compilation, it improves execution speed by avoiding runtime overhead, unlike runtime polymorphism (dynamic binding).",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 3,
+          "answer": "Overloading occurs when multiple functions with the same name have different parameters in the same class, while overriding happens when a derived class provides a new implementation for a method inherited from a base class.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 4,
+          "answer": "A virtual function in C++ is a member function of a base class that can be overridden in a derived class. It allows achieving runtime polymorphism by enabling dynamic binding of function calls using a base class pointer or reference.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        }
+      ],
+      "total_score": 0
+    },
+    {
+      "student_email": "atikur@gmail.com",
+      "answers": [
+        {
+          "order": 1,
+          "answer": "A class is like a template for a car model—each manufactured car (object) follows the same design but has unique characteristics (color, engine type).",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 2,
+          "answer": "In C++, function overloading and operator overloading are examples of compile-time polymorphism, enabling different behaviors for functions/operators based on argument types.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 3,
+          "answer": "Overloading is resolved at compile time (compile-time polymorphism), whereas overriding is determined at runtime (runtime polymorphism) using virtual functions.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 4,
+          "answer": "A function declared with the virtual keyword in the base class allows derived classes to provide their own implementation. When accessed via a base class pointer, the overridden function in the derived class is executed instead of the base class version.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        }
+      ],
+      "total_score": 0
+    },
+    {
+      "student_email": "ayan@gmail.com",
+      "answers": [
+        {
+          "order": 1,
+          "answer": "A class itself does not occupy memory; memory is allocated only when objects are instantiated from the class.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 2,
+          "answer": "Compile-time polymorphism is a type of polymorphism where function or operator overloading is resolved at compile time, allowing multiple methods with the same name but different parameters.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 3,
+          "answer": "Overloading is used to define multiple behaviors for a function based on parameter types or count, while overriding is used to modify the behavior of an inherited function to suit a derived class's needs.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        },
+        {
+          "order": 3,
+          "answer": "Virtual functions use a mechanism called the Virtual Table (VTable), where each class with virtual functions maintains a table of function pointers, allowing dynamic dispatch and ensuring the correct function is called at runtime.",
+          "scores": {
+            "clarity": 0,
+            "relevance": 0,
+            "accuracy": 0,
+            "completeness": 0,
+            "average": 0
+          },
+          "feedback": ""
+        }
+      ],
+      "total_score": 0
+    }
+  ],
+  "title": "Basic Science"
+}

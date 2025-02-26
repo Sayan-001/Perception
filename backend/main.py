@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, APIRouter, HTTPException
@@ -7,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from bson import ObjectId
 
-from typing import Optional, List
 from groq import Groq
 
 from contextlib import asynccontextmanager
@@ -31,6 +31,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+groqclient = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 @app.get("/api/get-type", response_model=dict)
 async def get_type(email: str):
@@ -142,8 +144,12 @@ async def get_tsa_for_teacher(teacher_email: str):
             
         )     
         
-@app.post("/paper/{paper_id}", response_model=dict)
-async def get_paper(paper_id: str, viewer_email: str):
+class ViewPaperRequest(BaseModel):
+    paper_id: str
+    viewer_email: str
+        
+@app.post("/api/paper/{paper_id}", response_model=dict)
+async def get_paper(request: ViewPaperRequest):
     """
     Retrieve a paper for a student or teacher.
     
@@ -165,6 +171,8 @@ async def get_paper(paper_id: str, viewer_email: str):
     - expired: a boolean indicating if the paper has expired
     - evaluated: a boolean indicating if the paper has been evaluated
     """
+    
+    paper_id, viewer_email = request.paper_id, request.viewer_email
     
     try:
         paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
@@ -241,7 +249,7 @@ async def get_paper(paper_id: str, viewer_email: str):
             detail=f"Internal server error: {str(e)}"
         )
         
-@app.get("/all-papers", response_model=dict)
+@app.get("/api/all-papers", response_model=dict)
 async def get_all_papers(email: str):
     try:
         paper_list = await question_papers.find({"teacher_email": email}).to_list(length=None)
@@ -250,7 +258,7 @@ async def get_all_papers(email: str):
                 "_id": str(paper["_id"]),
                 "title": paper["title"],
                 "expired": paper["expired"],
-                "evaluted": paper["evaluated"],
+                "evaluated": paper["evaluated"],
                 "user_type": "teacher"
             }
             for paper in paper_list
@@ -265,49 +273,158 @@ async def get_all_papers(email: str):
             status_code=500,
             detail=f"Internal server error: {str(e)}"   
         ) 
-        
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-class SingleQuestionBlock(BaseModel):
-    qid: int
-    question: str
-    teacher_answer: str
-    student_answer: Optional[str] = None
-    
-class MultipleQuestionBlock(BaseModel):
-    question_set: List[SingleQuestionBlock]
+@app.put("/api/evaluate/{paper_id}", response_model=dict)
+async def evaluate_paper(paper_id: str):
+    """
+    Evaluate all submissions for a paper using Groq AI.
+    Updates scores and feedback for all student answers.
+    """
+    try:
+        paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
+        if not paper:
+            raise HTTPException(status_code=404, detail="Paper not found")
 
-@app.post("/evaluate/")
-async def evaluate(questions_block: MultipleQuestionBlock):
-    response = { "evaluation": []}
-    
-    for question in questions_block.question_set:
-        to_eval = f"""
-        Question {question.qid}: {question.question}
-        Teacher's Answer: {question.teacher_answer}
-        Student's Answer: {question.student_answer}
-        """
-        
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": system_prompt_eval.strip(),
-                },
-                {
-                    "role": "user",
-                    "content": to_eval.strip(),
-                }
-            ],
-            model="llama-3.3-70b-versatile",
-            max_tokens=256,
-            response_format={"type": "json_object"},
-            temperature=0.5
+        if not paper.get("submissions"):
+            raise HTTPException(status_code=400, detail="No submissions to evaluate")
+
+        questions = dict()
+        teacher_answers = dict()
+        for question in paper["questions"]:
+            questions[question["order"]] = question["question"]
+            teacher_answers[question["order"]] = question["answer"]
+
+        for i in range(len(paper["submissions"])):
+            stud_submission = paper["submissions"][i]
+            total_score = 0
+            
+            for j in range(len(stud_submission["answers"])):
+                try:
+                    stud_answer = stud_submission["answers"][j]
+                    to_eval = f"""
+                    Question: {questions[stud_answer["order"]]}
+                    Teacher's Answer: {teacher_answers[stud_answer["order"]]}
+                    Student's Answer: {stud_answer["answer"]}
+                    """
+                    
+                    completion = groqclient.chat.completions.create(
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": system_prompt_eval.strip(),
+                            },
+                            {
+                                "role": "user",
+                                "content": to_eval.strip(),
+                            }
+                        ],
+                        model="llama-3.3-70b-versatile",
+                        max_tokens=256,
+                        response_format={"type": "json_object"},
+                        temperature=0.7,
+                    )
+                    evaluation = json.loads(completion.choices[0].message.content)
+                    print(evaluation)
+                
+                except (json.JSONDecodeError, KeyError, ValueError) as e:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"AI evaluation failed: {str(e)}"
+                    )
+                except Exception as e:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to process evaluation: {str(e)}"
+                    )
+                
+                # Update the student's answer with the scores and feedback
+                paper["submissions"][i]["answers"][j]["scores"] = evaluation["scores"]
+                paper["submissions"][i]["answers"][j]["feedback"] = evaluation["feedback"]
+                
+                # Add to total score
+                total_score += evaluation["scores"]["average"]
+            
+            # Update total score for this submission
+            paper["submissions"][i]["total_score"] = total_score
+                
+        # Update the paper with the evaluated submissions
+        result = await question_papers.update_one(
+            {"_id": ObjectId(paper_id)},
+            {"$set": {"submissions": paper["submissions"], "evaluated": True}}
         )
         
-        answer = chat_completion.choices[0].message.content
-        response["evaluation"].append(json.loads(answer))
+        if result.modified_count == 0:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to update paper with evaluations"
+            )
+        
+        return {
+            "message": "Paper evaluated successfully"
+        }
 
-    return response
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )    
+        
+@app.put("/api/reset/{paper_id}", response_model=dict)
+async def reset_evaluation(paper_id: str):
+    """
+    Reset evaluation for a paper.
+    """
+    try:
+        paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
+        if not paper:
+            raise HTTPException(status_code=404, detail="Paper not found")
+
+        if not paper.get("submissions"):
+            raise HTTPException(status_code=400, detail="No submissions to evaluate")
+        
+        if paper["evaluated"] == False:
+            raise HTTPException(status_code=400, detail="Paper has not been evaluated")
+        
+        evaluation = {
+            "scores": {
+                "clarity": 0,
+                "relevance": 0,
+                "accuracy": 0,
+                "completeness": 0,
+                "average": 0
+            },
+            "feedback": ""
+        }
+
+        for i in range(len(paper["submissions"])):
+            stud_submission = paper["submissions"][i]
+        
+            for j in range(len(stud_submission["answers"])):                
+                paper["submissions"][i]["answers"][j]["scores"] = evaluation["scores"]
+                paper["submissions"][i]["answers"][j]["feedback"] = evaluation["feedback"]
+                
+            paper["submissions"][i]["total_score"] = 0
+                
+        result = await question_papers.update_one(
+            {"_id": ObjectId(paper_id)},
+            {"$set": {"submissions": paper["submissions"], "evaluated": False}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to reset evaluation for paper"
+            )
+        
+        return {
+            "message": "Paper reset successfully"
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )  
+
 
 app.include_router(router)

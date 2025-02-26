@@ -58,12 +58,8 @@ export function LoginForm({
 
         const type: string = response.data.type;
 
-        if (type === "teacher") {
-          resetForm();
-          router.push("/teacher/dashboard");
-        } else if (type === "student") {
-          resetForm();
-          router.push("/student/dashboard");
+        if (type) {
+          router.push("/dashboard");
         } else {
           alert("Invalid role");
         }
