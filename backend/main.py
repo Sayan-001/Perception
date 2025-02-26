@@ -1,6 +1,5 @@
 import os
 import json
-from datetime import datetime
 from dotenv import load_dotenv
 
 from fastapi import FastAPI, APIRouter, HTTPException
@@ -145,6 +144,28 @@ async def get_tsa_for_teacher(teacher_email: str):
         
 @app.post("/paper/{paper_id}", response_model=dict)
 async def get_paper(paper_id: str, viewer_email: str):
+    """
+    Retrieve a paper for a student or teacher.
+    
+    If the viewer is the teacher, return the paper as is.
+    If the viewer is a student of the teacher, return the paper with the student's answers.
+    If the viewer is not authorized, return a 403 error.
+    
+    The paper is returned as a list of questions with the student's answers if available.
+    The student's answers are returned as a list of dictionaries with the following keys:
+    - order: the order of the question in the paper
+    - answer: the student's answer
+    - scores: the scores assigned by the teacher
+    - feedback: the feedback provided by the teacher
+    
+    The paper is returned as a dictionary with the following keys
+    - _id: the paper's id
+    - title: the paper's title
+    - questions: a list of questions with the student's answers
+    - expired: a boolean indicating if the paper has expired
+    - evaluated: a boolean indicating if the paper has been evaluated
+    """
+    
     try:
         paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
         if paper is None:
@@ -153,10 +174,11 @@ async def get_paper(paper_id: str, viewer_email: str):
         paper_dict = dict(paper)
         paper_dict["_id"] = str(paper_dict["_id"])
             
+        # Check if viewer is the teacher
         if viewer_email == paper["teacher_email"]:
             return {
-                "status": True,
-                "data": paper_dict
+                "type": "teacher",
+                "paper": paper_dict
             }
             
         student_exists = await association.find_one({
@@ -208,9 +230,9 @@ async def get_paper(paper_id: str, viewer_email: str):
             questions_data.append(question_data)
 
         return {
-            "status": True,
+            "type": "student",
             "attempted": attempted,
-            "data": questions_data
+            "paper": questions_data
         }
         
     except Exception as e:
@@ -223,10 +245,19 @@ async def get_paper(paper_id: str, viewer_email: str):
 async def get_all_papers(email: str):
     try:
         paper_list = await question_papers.find({"teacher_email": email}).to_list(length=None)
-        paper_ids = [str(paper["_id"]) for paper in paper_list]
+        paper_list = [
+            {
+                "_id": str(paper["_id"]),
+                "title": paper["title"],
+                "expired": paper["expired"],
+                "evaluted": paper["evaluated"],
+                "user_type": "teacher"
+            }
+            for paper in paper_list
+        ]
         
         return {
-            "data": paper_ids
+            "papers": paper_list
         }
         
     except Exception as e:
