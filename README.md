@@ -32,3 +32,22 @@ Even with the presence of AES (Automated Essay Grading), it works in open-world 
 - **Auth:** [Firebase](https://firebase.google.com/)
 - **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python)
 - **AI Integration:** LLM-based (llama 3.3-70b) text evaluation with [Groq](https://groq.com/) inference API
+
+## To Run
+
+### 1. Start the Frontend  
+
+```bash
+cd peak-app
+npm install
+npm run dev
+```
+
+### 2. Start the Backend  
+
+```bash
+cd backend
+source venv/Scripts/activate
+pip install -r requirements.txt
+uvicorn main:app
+```
