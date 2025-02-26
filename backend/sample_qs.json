@@ -1,0 +1,22 @@
+{
+  "question_set": [
+    {
+      "qid": 1,
+      "question": "What are the main climate zones of the Earth?",
+      "teacher_answer": "The Earth has three main climate zones: tropical, temperate, and polar. The tropical zone, located around the equator, has warm temperatures year-round. The temperate zone experiences distinct seasons, while the polar zone is characterized by extremely cold temperatures. These zones are influenced by latitude and global wind patterns.",
+      "student_answer": "There are three climate zones: tropic, temperate, and poles. The tropic zone is always hot because it's near the middle of Earth. The temperate zone has summer and winter, and the polar zone is very cold all the time. These zones change depending on how the Earth moves around the Sun."
+    },
+    {
+      "qid": 2,
+      "question": "What are the two longest rivers in the world?",
+      "teacher_answer": "The Nile River in Africa is generally considered the longest river, measuring about 6,650 km (4,130 miles). The Amazon River in South America is the second-longest, but it has the highest discharge volume of any river in the world. Some studies argue that the Amazon might be slightly longer, depending on how the measurements are taken.",
+      "student_answer": "The longest rivers are the Amazon and the Nile, but some people say the Amazon is longer. The Nile goes through all of Africa, and the Amazon is the biggest river in the world because it has the most water flowing. Scientists still don’t agree which one is longer."
+    },
+    {
+      "qid": 3,
+      "question": "What causes earthquakes and volcanic activity?",
+      "teacher_answer": "Earthquakes and volcanic activity are caused by the movement of tectonic plates. These plates float on the semi-molten mantle and interact at plate boundaries. Earthquakes occur when plates suddenly shift due to built-up stress, while volcanoes form in areas where magma rises to the surface, often at convergent or divergent plate boundaries.",
+      "student_answer": ""
+    }
+  ]
+}
