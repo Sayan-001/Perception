@@ -100,7 +100,6 @@ async def add_tsa(request: TeacherStudentAssociation):
         
         resp = await association.insert_one(request.model_dump())
         
-        # wrap the BSON object id in a string to avoid serialization issues
         return {
             "data": str(resp.inserted_id),
         }
@@ -144,6 +143,23 @@ async def get_tsa_for_teacher(teacher_email: str):
             
         )     
         
+@app.post("/api/create-paper", response_model=dict)
+async def create_paper(request: dict):
+    """
+    Create a new question paper.
+    """
+    try:
+        paper = await question_papers.insert_one(request)
+        return {
+            "id": str(paper.inserted_id)
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+        
 class ViewPaperRequest(BaseModel):
     paper_id: str
     viewer_email: str
@@ -153,23 +169,9 @@ async def get_paper(request: ViewPaperRequest):
     """
     Retrieve a paper for a student or teacher.
     
-    If the viewer is the teacher, return the paper as is.
-    If the viewer is a student of the teacher, return the paper with the student's answers.
-    If the viewer is not authorized, return a 403 error.
-    
-    The paper is returned as a list of questions with the student's answers if available.
-    The student's answers are returned as a list of dictionaries with the following keys:
-    - order: the order of the question in the paper
-    - answer: the student's answer
-    - scores: the scores assigned by the teacher
-    - feedback: the feedback provided by the teacher
-    
-    The paper is returned as a dictionary with the following keys
-    - _id: the paper's id
-    - title: the paper's title
-    - questions: a list of questions with the student's answers
-    - expired: a boolean indicating if the paper has expired
-    - evaluated: a boolean indicating if the paper has been evaluated
+    If the viewer is the teacher, returns the paper as is.
+    If the viewer is a student of the teacher, returns the paper with the student's answers.
+    If the viewer is not authorized, returns a 403 error.
     """
     
     paper_id, viewer_email = request.paper_id, request.viewer_email
@@ -182,7 +184,6 @@ async def get_paper(request: ViewPaperRequest):
         paper_dict = dict(paper)
         paper_dict["_id"] = str(paper_dict["_id"])
             
-        # Check if viewer is the teacher
         if viewer_email == paper["teacher_email"]:
             return {
                 "type": "teacher",
@@ -200,7 +201,6 @@ async def get_paper(request: ViewPaperRequest):
                 detail="You are not authorized to view this paper"
             )
         
-        # Check if student has attempted
         attempted = False
         student_answers = None
         
@@ -210,7 +210,6 @@ async def get_paper(request: ViewPaperRequest):
                 student_answers = submission["answers"]
                 break
 
-        # Prepare student view
         questions_data = []
         for question in paper["questions"]:
             question_data = {
@@ -219,7 +218,6 @@ async def get_paper(request: ViewPaperRequest):
             }
 
             if attempted:
-                # Find matching answer
                 answer = next(
                     (ans for ans in student_answers if ans["order"] == question["order"]),
                     None
@@ -228,7 +226,6 @@ async def get_paper(request: ViewPaperRequest):
                     answer_copy = answer.copy()
                     question_data = question_data | answer_copy
             else:
-                # Create empty answer template
                 question_data["answer"] = {
                     "answer": "",
                     "scores": Score().model_dump(),
@@ -341,13 +338,10 @@ async def evaluate_paper(paper_id: str):
                 paper["submissions"][i]["answers"][j]["scores"] = evaluation["scores"]
                 paper["submissions"][i]["answers"][j]["feedback"] = evaluation["feedback"]
                 
-                # Add to total score
                 total_score += evaluation["scores"]["average"]
             
-            # Update total score for this submission
             paper["submissions"][i]["total_score"] = total_score
                 
-        # Update the paper with the evaluated submissions
         result = await question_papers.update_one(
             {"_id": ObjectId(paper_id)},
             {"$set": {"submissions": paper["submissions"], "evaluated": True}}
