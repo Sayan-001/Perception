@@ -17,6 +17,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Plus, LogOut, User } from "lucide-react";
+import { AddStudent } from "@/components/add-student";
 
 interface Paper {
   _id: string;
@@ -71,10 +72,12 @@ export function TeacherDashboard({ email }: TeacherProps) {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+            <img src="logo.jpg" alt="Logo" className="h-12 w-12 rounded-lg" />
             <h1 className="text-2xl font-bold text-gray-900">
               Teacher Dashboard
             </h1>
             <div className="flex items-center gap-4">
+              <AddStudent />
               <Button
                 onClick={handleCreatePaper}
                 className="flex items-center gap-2"

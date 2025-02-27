@@ -77,7 +77,7 @@ export function TeacherView({ paper }: TeacherViewProps) {
                 key={q.order}
                 className="p-4 rounded-lg border border-gray-200"
               >
-                <div className="font-medium">Question {q.order}</div>
+                <div className="font-medium underline">Question {q.order}</div>
                 <p className="mt-2 text-gray-800 font-bold">{q.question}</p>
                 <p className="mt-2 text-sm text-gray-600">
                   <span className="font-medium">Expected Answer:</span>{" "}

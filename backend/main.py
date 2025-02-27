@@ -88,7 +88,11 @@ async def add_type(request: AddUserTypeRequest):
             detail=f"Internal server error: {str(e)}"
         )
     
-@app.post("/add-tsa", response_model=dict)
+class TeacherStudentAssociation(BaseModel):
+    teacher_email: str
+    student_email: str
+    
+@app.post("/api/add-tsa", response_model=dict)
 async def add_tsa(request: TeacherStudentAssociation):
     try:
         exists = await association.find_one(request.model_dump())
@@ -97,21 +101,38 @@ async def add_tsa(request: TeacherStudentAssociation):
                 status_code=400,
                 detail="Association already exists"
             )
+            
+        stud_exists = await types.find_one({"email": request.student_email, "type": "student"})
+        
+        if stud_exists is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Student not found"
+            )
+            
+        teach_exists = await types.find_one({"email": request.teacher_email, "type": "teacher"})
+        
+        if teach_exists is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Teacher not found"
+            )
         
         resp = await association.insert_one(request.model_dump())
         
         return {
-            "data": str(resp.inserted_id),
+            "id": str(resp.inserted_id)
         }
-        
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
         
-@app.get("/get-teachers", response_model=dict)
-async def get_tsa_for_student(student_email: str):
+@app.get("/api/get-teachers", response_model=dict)
+async def get_teachers(student_email: str):
     try:
         teachers_list = await association.find({"student_email": student_email}).to_list(length=None)
         teachers_list = [teacher["teacher_email"] for teacher in teachers_list]
@@ -126,8 +147,8 @@ async def get_tsa_for_student(student_email: str):
             detail=f"Internal server error: {str(e)}"
         )
         
-@app.get("/get-students", response_model=dict)
-async def get_tsa_for_teacher(teacher_email: str):
+@app.get("/api/get-students", response_model=dict)
+async def get_students(teacher_email: str):
     try:
         students_list = await association.find({"teacher_email": teacher_email}).to_list(length=None)
         students_list = [student["student_email"] for student in students_list]
@@ -240,6 +261,8 @@ async def get_paper(request: ViewPaperRequest):
             "paper": questions_data
         }
         
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -356,7 +379,9 @@ async def evaluate_paper(paper_id: str):
         return {
             "message": "Paper evaluated successfully"
         }
-
+        
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(
             status_code=500,

@@ -24,22 +24,13 @@ export function UnauthorizedAccess() {
             />
           </svg>
         </div>
-        <p className="text-gray-600 mb-6">
-          Sorry, you don't have permission to access this page.
-        </p>
+        <p className="text-gray-600 mb-6">Sorry, the page is not accessible.</p>
         <div className="space-y-4">
           <Button
             onClick={() => router.push("/login")}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
             Back to Login
-          </Button>
-          <Button
-            onClick={() => router.push("/")}
-            variant="outline"
-            className="w-full"
-          >
-            Go to Homepage
           </Button>
         </div>
       </div>

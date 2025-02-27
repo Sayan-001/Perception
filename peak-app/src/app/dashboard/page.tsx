@@ -11,39 +11,39 @@ import { TeacherDashboard } from "@/components/dashboard-view/teacher-view";
 import { StudentDashboard } from "@/components/dashboard-view/student-view";
 
 interface UserType {
-  type: "teacher" | "student" | null;
+  type: "teacher" | "student";
+}
+
+interface ApiResponse {
+  type: UserType["type"];
 }
 
 export default function DashboardPage() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
-  const [isTeacher, setIsTeacher] = useState<boolean>(false);
+  const [userType, setUserType] = useState<UserType["type"] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchUserInfo = useCallback(
     async (email: string): Promise<UserType["type"]> => {
       try {
-        const response = await api.get("/get-type", {
+        const response = await api.get<ApiResponse>("/get-type", {
           params: { email },
         });
 
-        if (!response.data.type) {
-          throw new Error("Invalid user type received");
-        }
-
-        return response.data.type as UserType["type"];
+        return response.data.type;
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to fetch user type";
-        setError(errorMessage);
-        return null;
+        throw new Error(
+          error instanceof Error ? error.message : "Failed to fetch user type"
+        );
       }
     },
     []
   );
 
   useEffect(() => {
+    const controller = new AbortController();
     let isMounted = true;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -51,7 +51,6 @@ export default function DashboardPage() {
         if (!user?.email) {
           if (isMounted) {
             setLoading(false);
-            router.push("/login");
           }
           return;
         }
@@ -59,15 +58,7 @@ export default function DashboardPage() {
         if (isMounted) {
           setEmail(user.email);
           const type = await fetchUserInfo(user.email);
-
-          if (!type && isMounted) {
-            throw new Error("Invalid user type");
-          }
-
-          if (isMounted) {
-            setIsTeacher(type === "teacher");
-            setLoading(false);
-          }
+          setUserType(type);
         }
       } catch (error) {
         if (isMounted) {
@@ -76,16 +67,19 @@ export default function DashboardPage() {
           );
           router.push("/login");
         }
+      } finally {
+        setLoading(false);
       }
     });
 
     return () => {
       isMounted = false;
       unsubscribe();
+      controller.abort();
     };
   }, [router, fetchUserInfo]);
 
-  if (error) {
+  if (error || !email) {
     return <UnauthorizedAccess />;
   }
 
@@ -93,11 +87,7 @@ export default function DashboardPage() {
     return <Loading />;
   }
 
-  if (!email) {
-    return <UnauthorizedAccess />;
-  }
-
-  return isTeacher ? (
+  return userType === "teacher" ? (
     <TeacherDashboard email={email} />
   ) : (
     <StudentDashboard email={email} />

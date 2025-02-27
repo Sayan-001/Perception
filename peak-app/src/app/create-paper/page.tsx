@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
-import { auth, db } from "@/firebase";
+import { auth } from "@/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -109,6 +107,10 @@ export default function CreatePaper() {
     }
   }
 
+  const discardAndReturn = () => {
+    router.push("/dashboard");
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8 pb-20 gap-6 sm:p-20">
       <div className="w-full max-w-2xl">
@@ -155,6 +157,9 @@ export default function CreatePaper() {
         ))}
 
         <div className="flex gap-4 justify-end mt-6">
+          <Button variant="destructive" onClick={discardAndReturn}>
+            Discard and Return
+          </Button>
           <Button variant="outline" onClick={addQuestion}>
             Add Question
           </Button>
