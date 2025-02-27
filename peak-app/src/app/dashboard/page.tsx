@@ -7,7 +7,8 @@ import { Loading } from "@/components/loading";
 import { UnauthorizedAccess } from "@/components/unauthorized";
 import { useRouter } from "next/navigation";
 
-import { TeacherDashboard } from "@/components/dashboard-view/teacher";
+import { TeacherDashboard } from "@/components/dashboard-view/teacher-view";
+import { StudentDashboard } from "@/components/dashboard-view/student-view";
 
 interface UserType {
   type: "teacher" | "student" | null;
@@ -96,5 +97,9 @@ export default function DashboardPage() {
     return <UnauthorizedAccess />;
   }
 
-  return isTeacher ? <TeacherDashboard email={email} /> : <Loading />;
+  return isTeacher ? (
+    <TeacherDashboard email={email} />
+  ) : (
+    <StudentDashboard email={email} />
+  );
 }
