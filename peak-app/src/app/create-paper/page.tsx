@@ -7,144 +7,159 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
 import { auth, db } from "@/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/axios";
 
-export default function Home() {
-  const [mains, setMains] = useState([
-    { id: 0, isEditable: true, question: "", answer: "" },
+interface QuestionAnswer {
+  order: number;
+  question: string;
+  answer: string;
+}
+
+export default function CreatePaper() {
+  const router = useRouter();
+  const [questions, setQuestions] = useState<QuestionAnswer[]>([
+    { order: 1, question: "", answer: "" },
   ]);
-  const [CurrentUser, setCurrentUser] = useState(null);
   const [title, setTitle] = useState("");
+  const [CurrentUser, setCurrentUser] = useState<any | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
+      } else {
+        // Redirect to login if no user
+        router.push("/login");
       }
     });
 
+    // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
-  function addq() {
-    setMains((prevMains) =>
-      prevMains
-        .map((main, i) =>
-          i === prevMains.length - 1 ? { ...main, isEditable: false } : main
-        )
-        .concat({
-          id: prevMains.length,
-          isEditable: true,
-          question: "",
-          answer: "",
-        })
-    );
+  function addQuestion() {
+    setQuestions((prev) => [
+      ...prev,
+      { order: prev.length + 1, question: "", answer: "" },
+    ]);
   }
 
-  function toggleEdit(index: number) {
-    setMains((prevMains) =>
-      prevMains.map((main, i) =>
-        i === index ? { ...main, isEditable: !main.isEditable } : main
-      )
-    );
-  }
-
-  function deleteq(index: number) {
-    setMains((prevMains) => prevMains.filter((_, i) => i !== index));
-  }
-
-  async function submitAllToFirestore() {
-    try {
-      const submissionData = mains.map((main) => ({
-        qid: main.id,
-        question: main.question,
-        answer: main.answer,
+  function removeQuestion(orderToRemove: number) {
+    setQuestions((prev) => {
+      const filtered = prev.filter((q) => q.order !== orderToRemove);
+      // Reorder remaining questions
+      return filtered.map((q, idx) => ({
+        ...q,
+        order: idx + 1,
       }));
+    });
+  }
 
-      await addDoc(collection(db, "question_sets"), {
-        evaluated: false,
-        t_email: CurrentUser.email,
+  function handleQuestionChange(
+    order: number,
+    field: "question" | "answer",
+    value: string
+  ) {
+    setQuestions((prev) =>
+      prev.map((q) => (q.order === order ? { ...q, [field]: value } : q))
+    );
+  }
+
+  async function handleSubmit() {
+    try {
+      if (!CurrentUser) {
+        toast.error("Please login first");
+        router.push("/login");
+        return;
+      }
+
+      if (!title.trim()) {
+        toast.error("Please enter a title");
+        return;
+      }
+
+      if (questions.some((q) => !q.question.trim() || !q.answer.trim())) {
+        toast.error("Please fill all questions and answers");
+        return;
+      }
+
+      const payload = {
         title: title,
-        questions: submissionData,
-      });
-      alert("All data saved successfully!");
+        teacher_email: CurrentUser?.email,
+        questions: questions.map((q) => ({
+          order: q.order,
+          question: q.question,
+          answer: q.answer,
+        })),
+        expired: false,
+        evaluated: false,
+        submissions: [],
+      };
+
+      const response = await api.post("/create-paper", payload);
+      console.log("Response:", response.data);
+
+      toast.success("Paper created successfully!");
+      router.push("/dashboard");
     } catch (error) {
-      console.error("Error adding documents: ", error);
+      console.error("Error:", error);
+      toast.error("Failed to create paper");
     }
   }
 
-  function handleInputChange(index: number, field: string, value: string) {
-    setMains((prevMains) =>
-      prevMains.map((main, i) =>
-        i === index ? { ...main, [field]: value } : main
-      )
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8 pb-20 gap-6 sm:p-20 font-geist">
-      <div className="w-full max-w-2xl mb-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8 pb-20 gap-6 sm:p-20">
+      <div className="w-full max-w-2xl">
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter the title of the question set"
-          className="border border-gray-300 rounded-lg p-3 w-full"
+          placeholder="Enter paper title"
+          className="w-full p-3 rounded-lg border border-gray-300 mb-6"
         />
-      </div>
 
-      {mains.map((main, index) => (
-        <Card
-          key={main.id}
-          className="w-full max-w-2xl p-6 bg-white rounded-2xl shadow-lg"
-        >
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Question {index + 1}
-          </h2>
-          <Textarea
-            className="border border-gray-300 rounded-lg p-3 w-full"
-            disabled={!main.isEditable}
-            value={main.question}
-            onChange={(e) =>
-              handleInputChange(index, "question", e.target.value)
-            }
-            placeholder="Enter your question here..."
-          />
-          <Textarea
-            className="border border-gray-300 rounded-lg p-3 w-full mt-4"
-            disabled={!main.isEditable}
-            value={main.answer}
-            onChange={(e) => handleInputChange(index, "answer", e.target.value)}
-            placeholder="Enter your answer here..."
-          />
-          <div className="flex gap-4 mt-4">
-            <Button
-              onClick={() => toggleEdit(index)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-            >
-              {main.isEditable ? "Done" : "Edit"}
-            </Button>
-            <Button
-              onClick={() => deleteq(index)}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
-            >
-              Delete
-            </Button>
-          </div>
-        </Card>
-      ))}
-      <div className="flex gap-4 mt-6">
-        <Button
-          onClick={addq}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
-        >
-          Add new question
-        </Button>
-        <Button
-          onClick={submitAllToFirestore}
-          className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg"
-        >
-          Submit All
-        </Button>
+        {questions.map((q) => (
+          <Card key={q.order} className="mb-6 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Question {q.order}</h3>
+              {questions.length > 1 && (
+                <Button
+                  variant="destructive"
+                  onClick={() => removeQuestion(q.order)}
+                  size="sm"
+                >
+                  Remove
+                </Button>
+              )}
+            </div>
+
+            <Textarea
+              value={q.question}
+              onChange={(e) =>
+                handleQuestionChange(q.order, "question", e.target.value)
+              }
+              placeholder="Enter your question"
+              className="mb-4"
+            />
+
+            <Textarea
+              value={q.answer}
+              onChange={(e) =>
+                handleQuestionChange(q.order, "answer", e.target.value)
+              }
+              placeholder="Enter the answer"
+            />
+          </Card>
+        ))}
+
+        <div className="flex gap-4 justify-end mt-6">
+          <Button variant="outline" onClick={addQuestion}>
+            Add Question
+          </Button>
+          <Button onClick={handleSubmit}>Create Paper</Button>
+        </div>
       </div>
     </div>
   );
