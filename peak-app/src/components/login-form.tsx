@@ -16,27 +16,17 @@ import { auth } from "@/firebase"; // Removed unused provider and signInWithPopu
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/axios";
-
-interface UserTypeResponse {
-  type: "teacher" | "student";
-}
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const router = useRouter();
+
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-
-  const resetForm = () => {
-    setEmail("");
-    setPassword("");
-    setError("");
-  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -52,22 +42,10 @@ export function LoginForm({
       );
 
       if (userCredential.user) {
-        const response = await api.get<UserTypeResponse>("/get-type", {
-          params: { email: userCredential.user.email },
-        });
-
-        const type: string = response.data.type;
-
-        if (type) {
-          router.push("/dashboard");
-        } else {
-          alert("Invalid role");
-        }
+        router.push("/dashboard");
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred during login";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "Failed to login");
     } finally {
       setLoading(false);
     }

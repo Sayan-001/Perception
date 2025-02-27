@@ -21,19 +21,13 @@ export function SignUpForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [type, setType] = useState<string>("student");
-  const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-
   const router = useRouter();
 
-  const resetForm = () => {
-    setEmail("");
-    setPassword("");
-    setType("student");
-  };
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [type, setType] = useState<"teacher" | "student">("student");
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,12 +45,9 @@ export function SignUpForm({
         user_type: type,
       });
 
-      resetForm();
       router.push("/login");
-      console.log(userCredential.user);
-      console.log(response.data.id);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sign up");
     } finally {
       setLoading(false);
     }
@@ -100,7 +91,9 @@ export function SignUpForm({
                 <select
                   id="role"
                   value={type}
-                  onChange={(e) => setType(e.target.value)}
+                  onChange={(e) =>
+                    setType(e.target.value as "teacher" | "student")
+                  }
                   className="p-2 border rounded"
                   required
                 >
@@ -111,7 +104,7 @@ export function SignUpForm({
               {error && (
                 <p className="text-red-500 text-sm text-center">{error}</p>
               )}
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Signing up..." : "Sign Up"}
               </Button>
             </div>
