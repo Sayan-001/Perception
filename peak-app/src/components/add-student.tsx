@@ -77,6 +77,7 @@ export function AddStudent() {
           default:
             setError("Failed to add student");
         }
+        toast.error("Failed to add student");
       } else {
         setError("Network error occurred");
       }

@@ -8,6 +8,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/axios";
+import { UnauthorizedAccess } from "@/components/unauthorized";
 
 interface QuestionAnswer {
   order: number;
@@ -17,23 +18,20 @@ interface QuestionAnswer {
 
 export default function CreatePaper() {
   const router = useRouter();
+
+  const [CurrentUser, setCurrentUser] = useState<any | null>(null);
+
+  const [title, setTitle] = useState("");
   const [questions, setQuestions] = useState<QuestionAnswer[]>([
     { order: 1, question: "", answer: "" },
   ]);
-  const [title, setTitle] = useState("");
-  const [CurrentUser, setCurrentUser] = useState<any | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser(user);
-      } else {
-        // Redirect to login if no user
-        router.push("/login");
       }
     });
-
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [router]);
 
@@ -67,12 +65,6 @@ export default function CreatePaper() {
 
   async function handleSubmit() {
     try {
-      if (!CurrentUser) {
-        toast.error("Please login first");
-        router.push("/login");
-        return;
-      }
-
       if (!title.trim()) {
         toast.error("Please enter a title");
         return;
@@ -85,7 +77,7 @@ export default function CreatePaper() {
 
       const payload = {
         title: title,
-        teacher_email: CurrentUser?.email,
+        teacher_email: CurrentUser.email,
         questions: questions.map((q) => ({
           order: q.order,
           question: q.question,
@@ -97,8 +89,6 @@ export default function CreatePaper() {
       };
 
       const response = await api.post("/create-paper", payload);
-      console.log("Response:", response.data);
-
       toast.success("Paper created successfully!");
       router.push("/dashboard");
     } catch (error) {
@@ -110,6 +100,10 @@ export default function CreatePaper() {
   const discardAndReturn = () => {
     router.push("/dashboard");
   };
+
+  if (!CurrentUser) {
+    return <UnauthorizedAccess />;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8 pb-20 gap-6 sm:p-20">

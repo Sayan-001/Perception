@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} ${geistMono.variable} antialiased`}>
         {children}
-        <Toaster />
+        <Toaster richColors />
       </body>
     </html>
   );

@@ -12,10 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { useState } from "react";
-import { auth } from "@/firebase"; // Removed unused provider and signInWithPopup
+import { auth } from "@/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -42,9 +43,11 @@ export function LoginForm({
       );
 
       if (userCredential.user) {
+        toast.success("Logged in successfully");
         router.push("/dashboard");
       }
     } catch (err) {
+      toast.error("Login failed");
       setError(err instanceof Error ? err.message : "Failed to login");
     } finally {
       setLoading(false);
