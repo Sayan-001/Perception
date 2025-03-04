@@ -1,21 +1,17 @@
 "use client";
-import { auth } from "@/firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { auth } from "@/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { Loading } from "@/components/loading";
-import { api } from "@/lib/axios";
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user?.email) {
-        router.push("/dashboard");
-      } else {
-        router.push("/login");
-      }
+      const route = user?.email ? "/dashboard" : "/login";
+      router.push(route);
     });
 
     return () => unsubscribe();

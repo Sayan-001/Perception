@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/axios";
+import { api } from "@/axios";
 import { Loading } from "@/components/loading";
 import { UnauthorizedAccess } from "@/components/unauthorized";
 import { NotFound } from "@/components/not-found";
-import { TeacherView } from "@/components/paper-view/teacher-view";
-import { StudentView } from "@/components/paper-view/student-view";
+import { TeacherView } from "../teacher-view";
+import { StudentView } from "../student-view";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
 

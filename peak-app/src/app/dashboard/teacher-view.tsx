@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QPCard } from "../qp-card";
+import { QPCard } from "./qp-card";
 import { auth } from "@/firebase";
 import { signOut } from "firebase/auth";
-import { api } from "@/lib/axios";
+import { api } from "@/axios";
 
 import {
   DropdownMenu,
@@ -17,7 +17,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Plus, LogOut, User } from "lucide-react";
-import { AddStudent } from "@/components/add-student";
+import { AddStudent } from "./add-student";
 
 interface Paper {
   _id: string;

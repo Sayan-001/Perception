@@ -2,13 +2,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { auth } from "@/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { api } from "@/lib/axios";
+import { api } from "@/axios";
 import { Loading } from "@/components/loading";
 import { UnauthorizedAccess } from "@/components/unauthorized";
 import { useRouter } from "next/navigation";
 
-import { TeacherDashboard } from "@/components/dashboard-view/teacher-view";
-import { StudentDashboard } from "@/components/dashboard-view/student-view";
+import { StudentDashboard } from "./student-view";
+import { TeacherDashboard } from "./teacher-view";
 
 interface UserType {
   type: "teacher" | "student";

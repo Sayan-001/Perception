@@ -7,7 +7,7 @@ import { auth } from "@/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/axios";
+import { api } from "@/axios";
 import { UnauthorizedAccess } from "@/components/unauthorized";
 
 interface QuestionAnswer {

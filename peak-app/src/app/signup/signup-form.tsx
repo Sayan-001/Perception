@@ -1,5 +1,12 @@
 "use client";
-import { cn } from "@/lib/utils";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { toast } from "sonner";
+
+// Components
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,17 +17,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { auth } from "@/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/axios";
 
-export function SignUpForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+// Utils
+import { cn } from "@/lib/utils";
+import { auth } from "@/firebase";
+import { api } from "@/axios";
+
+interface SignUpFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  className?: string;
+}
+
+export function SignUpForm({ className, ...props }: SignUpFormProps) {
   const router = useRouter();
 
   const [email, setEmail] = useState<string>("");
@@ -40,13 +47,15 @@ export function SignUpForm({
         password
       );
 
-      const response = await api.post("/add-type", {
+      await api.post("/add-type", {
         email: userCredential.user.email,
         user_type: type,
       });
 
+      toast.success("Account created successfully");
       router.push("/login");
     } catch (err) {
+      toast.error("Failed to sign up");
       setError(err instanceof Error ? err.message : "Failed to sign up");
     } finally {
       setLoading(false);

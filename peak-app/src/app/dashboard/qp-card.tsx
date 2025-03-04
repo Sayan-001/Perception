@@ -10,9 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/axios";
+import { api } from "@/axios";
 import { toast } from "sonner";
 
 interface QPCardProps {

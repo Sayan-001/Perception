@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/axios";
+import { api } from "@/axios";
 import { toast } from "sonner";
 
 interface AddStudentProps {

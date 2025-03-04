@@ -1,5 +1,12 @@
 "use client";
-import { cn } from "@/lib/utils";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { toast } from "sonner";
+
+// Components
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,17 +18,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { useState } from "react";
+// Utils
+import { cn } from "@/lib/utils";
 import { auth } from "@/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  className?: string;
+}
+
+export function LoginForm({ className, ...props }: LoginFormProps) {
   const router = useRouter();
 
   const [email, setEmail] = useState<string>("");
