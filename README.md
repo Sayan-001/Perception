@@ -48,6 +48,9 @@ npm run dev
 ```bash
 cd backend
 
+#create a virtual environment 
+python -m venv venv
+
 # Activate the virtual environment (Use the appropriate command for your OS)
 # On macOS/Linux:
 source venv/bin/activate
