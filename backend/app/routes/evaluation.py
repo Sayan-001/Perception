@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 from groq import Groq
 
 from app.system_params import system_prompt
-from database.connections import question_papers
+from app.database.connections import question_papers
 
 load_dotenv()
 groqclient = Groq(api_key=os.getenv("GROQ_API_KEY"))

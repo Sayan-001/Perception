@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from bson import ObjectId
 from typing import List
-from database.connections import question_papers, association
+from app.database.connections import question_papers, association
 
 router = APIRouter(prefix="/api")
 

@@ -1,5 +1,5 @@
-from config import create_app
-from routes import auth, association, papers, evaluation
+from app.config import create_app
+from app.routes import auth, association, papers, evaluation
 
 app = create_app()
 

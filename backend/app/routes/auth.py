@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from database.connections import types
+from app.database.connections import types
 from pydantic import BaseModel
 from enum import Enum
 
