@@ -57,7 +57,7 @@ export function TeacherDashboard({ email }: TeacherProps) {
 
   const fetchPapers = async () => {
     try {
-      const response = await api.get("/all-papers", {
+      const response = await api.get("/teacher-papers", {
         params: { email },
       });
       setPapers(response.data.papers);
@@ -113,7 +113,7 @@ export function TeacherDashboard({ email }: TeacherProps) {
               <AddStudent />
               <Button
                 onClick={handleCreatePaper}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-green-500"
               >
                 <Plus className="h-4 w-4" />
                 Create Paper

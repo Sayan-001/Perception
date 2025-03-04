@@ -30,6 +30,7 @@ interface QPCardProps {
   expired: boolean;
   evaluated: boolean;
   user_type: "student" | "teacher";
+  attempted?: boolean;
 }
 
 export function QPCard({
@@ -38,6 +39,7 @@ export function QPCard({
   expired,
   evaluated,
   user_type,
+  attempted = false,
 }: QPCardProps) {
   const router = useRouter();
   const [viewLoading, setViewLoading] = useState(false);
@@ -83,7 +85,7 @@ export function QPCard({
   const handleExpireClick = async () => {
     try {
       await api.put(`/expire-paper/${id}`);
-      window.location.reload();
+      router.refresh();
       toast.success("Paper set as expired!");
     } catch (error) {
       console.error("Expiry failed:", error);
@@ -94,7 +96,7 @@ export function QPCard({
   const handleUnexpireClick = async () => {
     try {
       await api.put(`/unexpire-paper/${id}`);
-      window.location.reload();
+      router.refresh();
       toast.success("Paper set as active!");
     } catch (error) {
       console.error("Unexpiry failed:", error);
@@ -112,14 +114,38 @@ export function QPCard({
               {expired ? "Expired" : "Active"}
             </Badge>
             {evaluated && <Badge variant="outline">Evaluated</Badge>}
+            {user_type === "student" && (
+              <Badge variant={attempted ? "secondary" : "outline"}>
+                {attempted ? "Attempted" : "Not Attempted"}
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
       <CardFooter className="flex justify-between items-center">
-        <Button onClick={handleViewClick} disabled={viewLoading}>
-          {viewLoading ? "Loading..." : "View"}
-        </Button>
-
+        {user_type === "student" && !expired && !attempted && (
+          <Button
+            onClick={() => {
+              router.push(`/attempt-paper/${id}`);
+            }}
+          >
+            Attempt
+          </Button>
+        )}
+        {user_type === "student" && attempted && (
+          <Button
+            onClick={() => {
+              router.push(`/question-paper/${id}`);
+            }}
+          >
+            View Attempt
+          </Button>
+        )}
+        {user_type === "teacher" && (
+          <Button onClick={handleViewClick} disabled={viewLoading}>
+            {viewLoading ? "Loading..." : "View"}
+          </Button>
+        )}
         {user_type === "teacher" && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
