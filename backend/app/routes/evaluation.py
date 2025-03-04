@@ -1,12 +1,14 @@
 import os
 import time
-from dotenv import load_dotenv
 import json
-from fastapi import APIRouter, HTTPException
 from bson import ObjectId
-from database.connections import question_papers
+from dotenv import load_dotenv
+
+from fastapi import APIRouter, HTTPException
 from groq import Groq
-from app.models.system_params import system_prompt
+
+from app.system_params import system_prompt
+from database.connections import question_papers
 
 load_dotenv()
 groqclient = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -16,8 +18,17 @@ router = APIRouter(prefix="/api")
 @router.put("/evaluate/{paper_id}", response_model=dict)
 async def evaluate_paper(paper_id: str):
     """
-    Evaluate all submissions for a paper using Groq AI.
-    Updates scores and feedback for all student answers.
+    Evaluate a paper using AI.
+    
+    Args:
+    - paper_id: str: The ID of the paper to evaluate.
+    
+    Returns:
+    - dict: A message indicating the status of the evaluation.
+    
+    Raises:
+    - HTTPException: If the paper is not found, has no submissions, or if the evaluation fails.
+    - HTTPException: If there is an internal server error.
     """
     try:
         paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
@@ -111,6 +122,16 @@ async def evaluate_paper(paper_id: str):
 async def reset_evaluation(paper_id: str):
     """
     Reset evaluation for a paper.
+    
+    Args:
+    - paper_id: str: The ID of the paper to reset evaluation for.
+    
+    Returns:
+    - dict: A message indicating the status of the reset.
+    
+    Raises:
+    - HTTPException: If the paper is not found, has no submissions, or if the reset fails.
+    - HTTPException: If there is an internal server error.
     """
     try:
         paper = await question_papers.find_one({"_id": ObjectId(paper_id)})

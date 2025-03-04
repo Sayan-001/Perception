@@ -10,6 +10,20 @@ class TeacherStudentAssociation(BaseModel):
     
 @router.post("/add-tsa", response_model=dict)
 async def add_tsa(request: TeacherStudentAssociation):
+    """
+    Add a teacher-student association to the database.
+    
+    Args:
+    - request: TeacherStudentAssociation: The request model containing the teacher and student emails.
+    
+    Returns:
+    - dict: A dictionary containing the id of the inserted document.
+    
+    Raises:
+    - HTTPException: If the association already exists, student or teacher is not found.
+    - HTTPException: If there is an internal server error.
+    """
+    
     try:
         exists = await association.find_one(request.model_dump())
         if exists is not None:
@@ -47,13 +61,23 @@ async def add_tsa(request: TeacherStudentAssociation):
             detail=f"Internal server error: {str(e)}"
         )
         
-class GetTeachersRequest(BaseModel):
-    student_email: str
-        
 @router.get("/get-teachers", response_model=dict)
-async def get_teachers(request: GetTeachersRequest):
+async def get_teachers(email: str):
+    """
+    Get all teachers associated with a student.
+    
+    Args:
+    - request: GetTeachersRequest: The request model containing the student email.
+    
+    Returns:
+    - dict: A dictionary containing the list of teacher emails.
+    
+    Raises:
+    - HTTPException: If there is an internal server error.
+    """
+    
     try:
-        assc_list = await association.find(request.model_dump()).to_list()
+        assc_list = await association.find({"student_email": email}).to_list()
         teachers_list = [teacher["teacher_email"] for teacher in assc_list]
         
         return {
@@ -66,13 +90,23 @@ async def get_teachers(request: GetTeachersRequest):
             detail=f"Internal server error: {str(e)}"
         )
         
-class GetStudentsRequest(BaseModel):
-    teacher_email: str
-        
 @router.get("/get-students", response_model=dict)
-async def get_students(request: GetStudentsRequest):
+async def get_students(email: str):
+    """
+    Get all students associated with a teacher.
+    
+    Args:
+    - request: GetStudentsRequest: The request model containing the teacher email.
+    
+    Returns:
+    - dict: A dictionary containing the list of student emails.
+    
+    Raises:
+    - HTTPException: If there is an internal server error.
+    """
+    
     try:
-        assc_list = await association.find(request.model_dump()).to_list()
+        assc_list = await association.find({"teacher_email": email}).to_list()
         students_list = [student["student_email"] for student in assc_list]
         
         return {

@@ -9,7 +9,16 @@ router = APIRouter(prefix="/api")
 async def get_type(email: str):
     """
     Used to get the type of user (teacher or student).
-    Works synchronously with login.
+    
+    Args:
+    - email: Email of the user
+    
+    Returns:
+    - type: Type of the user
+    
+    Raises:
+    - 404: If user not found
+    - 500: Internal server error
     """
     
     try:
@@ -39,9 +48,20 @@ class AddUserTypeRequest(BaseModel):
 @router.post("/add-type", response_model=dict)
 async def add_type(request: AddUserTypeRequest):
     """
-    Used to create the type of user (teacher or student).
-    Works synchronously with sign-up.
+    Used to add the type of user (teacher or student).
+    
+    Args:
+    - email: Email of the user
+    - user_type: Type of the user
+    
+    Returns:
+    - id: ID of the user
+    
+    Raises:
+    - 400: If user already exists
+    - 500: Internal server error
     """
+    
     try:
         exists = await types.find_one({"email": request.email})
         if exists is not None:

@@ -45,6 +45,18 @@ class QuestionPaper(BaseModel):
 async def create_paper(request: QuestionPaper):
     """
     Create a new question paper.
+    
+    Args:
+    - teacher_email: Email of the teacher creating the paper
+    - title: Title of the paper
+    - questions: List of questions in the paper
+    - submissions: List of student submissions
+    
+    Returns:
+    - id: ID of the created paper
+    
+    Raises:
+    - HTTPException(500): Internal server error
     """
     try:
         paper = await question_papers.insert_one(request)
@@ -68,9 +80,18 @@ async def get_paper(request: ViewPaperRequest):
     """
     Retrieve a paper for a student or teacher.
     
-    If the viewer is the teacher, returns the paper as is.
-    If the viewer is a student of the teacher, returns the paper with the student's answers.
-    If the viewer is not authorized, returns a 403 error.
+    Args:
+    - paper_id: ID of the paper
+    - viewer_email: Email of the student or teacher viewing the paper
+    
+    Returns:
+    - type: Type of the viewer (teacher or student)
+    - paper: Paper data
+    
+    Raises:
+    - HTTPException(404): Paper not found
+    - HTTPException(403): Unauthorized to view the paper
+    - HTTPException(500): Internal server error
     """
     
     paper_id, viewer_email = request.paper_id, request.viewer_email
@@ -149,6 +170,18 @@ async def get_paper(request: ViewPaperRequest):
         
 @router.get("/all-papers", response_model=dict)
 async def get_all_papers(email: str):
+    """
+    Retrieve all papers for a teacher.
+    
+    Args:
+    - email: Email of the teacher
+    
+    Returns:
+    - papers: List of papers
+    
+    Raises:
+    - HTTPException(500): Internal server error
+    """
     try:
         paper_list = await question_papers.find({"teacher_email": email}).to_list(length=None)
         paper_list = [
