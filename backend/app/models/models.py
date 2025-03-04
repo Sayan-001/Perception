@@ -40,7 +40,4 @@ class QuestionPaper(BaseModel):
     evaluated: bool = False
     expired: bool = False
     questions: List[Question]
-    submissions: List[StudentSubmission]
-    
-     
-    
+    submissions: List[StudentSubmission]  
