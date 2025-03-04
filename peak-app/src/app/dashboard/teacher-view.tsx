@@ -15,6 +15,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
 import { Button } from "@/components/ui/button";
 import { Plus, LogOut, User } from "lucide-react";
 import { AddStudent } from "./add-student";
@@ -35,22 +53,37 @@ export function TeacherDashboard({ email }: TeacherProps) {
   const router = useRouter();
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
+  const [students, setStudents] = useState([]);
+
+  const fetchPapers = async () => {
+    try {
+      const response = await api.get("/all-papers", {
+        params: { email },
+      });
+      setPapers(response.data.papers);
+    } catch (error) {
+      console.error("Failed to fetch papers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStudents = async () => {
+    try {
+      const response = await api.get("/get-students", {
+        params: { email },
+      });
+      setStudents(response.data.students);
+    } catch (error) {
+      console.error("Failed to fetch students:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchPapers = async () => {
-      try {
-        const response = await api.get("/all-papers", {
-          params: { email },
-        });
-        setPapers(response.data.papers);
-      } catch (error) {
-        console.error("Failed to fetch papers:", error);
-      } finally {
-        setLoading(false);
-      }
+    const fetchData = async () => {
+      await Promise.all([fetchPapers(), getStudents()]);
     };
-
-    fetchPapers();
+    fetchData();
   }, [email]);
 
   const handleLogout = async () => {
@@ -94,6 +127,43 @@ export function TeacherDashboard({ email }: TeacherProps) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>{email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <Sheet>
+                    <SheetTrigger asChild onClick={getStudents}>
+                      <div className="flex items-center w-full px-2 py-1.5 text-sm cursor-pointer hover:bg-gray-100">
+                        <User className="h-4 w-4 mr-2" />
+                        View Students
+                      </div>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[400px]">
+                      <SheetHeader>
+                        <SheetTitle>Students List</SheetTitle>
+                        <SheetDescription>
+                          All students registered under your class
+                        </SheetDescription>
+                      </SheetHeader>
+                      <div className="mt-6">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Email</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {students.map((email: string, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell>{email}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        {students.length === 0 && (
+                          <div className="text-center py-4 text-sm text-gray-500">
+                            No students found
+                          </div>
+                        )}
+                      </div>
+                    </SheetContent>
+                  </Sheet>
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
@@ -104,8 +174,8 @@ export function TeacherDashboard({ email }: TeacherProps) {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
           <div className="grid place-items-center h-64">
@@ -127,17 +197,58 @@ export function TeacherDashboard({ email }: TeacherProps) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {papers.map((paper) => (
-              <QPCard
-                key={paper._id}
-                id={paper._id}
-                title={paper.title}
-                expired={paper.expired}
-                evaluated={paper.evaluated}
-                user_type="teacher"
-              />
-            ))}
+          <div className="space-y-8">
+            {/* Ongoing Papers Section */}
+            <section>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Ongoing Papers
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {papers
+                  .filter((paper) => !paper.expired)
+                  .map((paper) => (
+                    <QPCard
+                      key={paper._id}
+                      id={paper._id}
+                      title={paper.title}
+                      expired={paper.expired}
+                      evaluated={paper.evaluated}
+                      user_type="teacher"
+                    />
+                  ))}
+              </div>
+              {papers.filter((paper) => !paper.expired).length === 0 && (
+                <p className="text-center text-gray-500 py-4">
+                  No ongoing papers
+                </p>
+              )}
+            </section>
+
+            {/* Expired Papers Section */}
+            <section>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Expired Papers
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {papers
+                  .filter((paper) => paper.expired)
+                  .map((paper) => (
+                    <QPCard
+                      key={paper._id}
+                      id={paper._id}
+                      title={paper.title}
+                      expired={paper.expired}
+                      evaluated={paper.evaluated}
+                      user_type="teacher"
+                    />
+                  ))}
+              </div>
+              {papers.filter((paper) => paper.expired).length === 0 && (
+                <p className="text-center text-gray-500 py-4">
+                  No expired papers
+                </p>
+              )}
+            </section>
           </div>
         )}
       </main>

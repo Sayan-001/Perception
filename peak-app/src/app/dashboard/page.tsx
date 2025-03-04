@@ -79,12 +79,10 @@ export default function DashboardPage() {
     };
   }, [router, fetchUserInfo]);
 
-  if (error || !email) {
-    return <UnauthorizedAccess />;
-  }
-
   if (loading) {
     return <Loading />;
+  } else if (!email || error) {
+    return <UnauthorizedAccess />;
   }
 
   return userType === "teacher" ? (

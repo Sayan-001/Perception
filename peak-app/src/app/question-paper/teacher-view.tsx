@@ -3,6 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface Scores {
   clarity: number;
   relevance: number;
@@ -43,8 +51,12 @@ interface TeacherViewProps {
 }
 
 export function TeacherView({ paper }: TeacherViewProps) {
-  const [selectedStudent, setSelectedStudent] = useState<string | null>(
-    paper.submissions[0]?.student_email || null
+  const [selectedStudent, setSelectedStudent] = useState<string>(
+    paper.submissions[0]?.student_email || ""
+  );
+
+  const selectedSubmission = paper.submissions.find(
+    (sub) => sub.student_email === selectedStudent
   );
 
   return (
@@ -91,94 +103,95 @@ export function TeacherView({ paper }: TeacherViewProps) {
         {/* Submissions Panel */}
         <Card className="col-span-12 lg:col-span-8">
           <CardHeader>
-            <CardTitle>Student Submissions</CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>Student Submissions</CardTitle>
+              <Select
+                value={selectedStudent}
+                onValueChange={setSelectedStudent}
+              >
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select a student" />
+                </SelectTrigger>
+                <SelectContent>
+                  {paper.submissions.map((sub) => (
+                    <SelectItem
+                      key={sub.student_email}
+                      value={sub.student_email}
+                    >
+                      {sub.student_email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
-            <Tabs
-              defaultValue={selectedStudent || ""}
-              onValueChange={setSelectedStudent}
-            >
-              <TabsList className="w-full">
-                {paper.submissions.map((sub) => (
-                  <TabsTrigger
-                    key={sub.student_email}
-                    value={sub.student_email}
-                    className="flex-1"
-                  >
-                    {sub.student_email}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            {selectedSubmission ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-md font-bold">
+                    Total Score Obtained: {selectedSubmission.total_score} /{" "}
+                    {paper.questions.length * 10}
+                  </h3>
+                </div>
 
-              {paper.submissions.map((sub) => (
-                <TabsContent
-                  key={sub.student_email}
-                  value={sub.student_email}
-                  className="space-y-4"
-                >
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-md font-bold">
-                      Total Score Obtained: {sub.total_score} /{" "}
-                      {paper.questions.length * 10}
-                    </h3>
-                  </div>
+                {selectedSubmission.answers.map((ans) => (
+                  <Card key={ans.order}>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <div>
+                          <div className="font-bold">Question {ans.order}</div>
+                          <p className="mt-2">Answer: {ans.answer || ""}</p>
+                        </div>
 
-                  {sub.answers.map((ans) => (
-                    <Card key={ans.order}>
-                      <CardContent className="pt-6">
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <div className="font-bold">
-                              Question {ans.order}
-                            </div>
-                            <p className="mt-2">Answer: {ans.answer || ""}</p>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="font-medium mb-2 underline">
-                                Scores
-                              </h4>
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span>Clarity:</span>
-                                  <span>{ans.scores.clarity}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Relevance:</span>
-                                  <span>{ans.scores.relevance}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Accuracy:</span>
-                                  <span>{ans.scores.accuracy}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Completeness:</span>
-                                  <span>{ans.scores.completeness}</span>
-                                </div>
-                                <div className="flex justify-between font-medium">
-                                  <span>Average:</span>
-                                  <span>{ans.scores.average}</span>
-                                </div>
+                            <h4 className="font-medium mb-2 underline">
+                              Scores
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between">
+                                <span>Clarity:</span>
+                                <span>{ans.scores.clarity}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Relevance:</span>
+                                <span>{ans.scores.relevance}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Accuracy:</span>
+                                <span>{ans.scores.accuracy}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Completeness:</span>
+                                <span>{ans.scores.completeness}</span>
+                              </div>
+                              <div className="flex justify-between font-medium">
+                                <span>Average:</span>
+                                <span>{ans.scores.average}</span>
                               </div>
                             </div>
+                          </div>
 
-                            <div>
-                              <h4 className="font-medium mb-2 underline">
-                                Feedback
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                {ans.feedback || "No feedback provided"}
-                              </p>
-                            </div>
+                          <div>
+                            <h4 className="font-medium mb-2 underline">
+                              Feedback
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              {ans.feedback || "No feedback provided"}
+                            </p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </TabsContent>
-              ))}
-            </Tabs>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No student selected
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
