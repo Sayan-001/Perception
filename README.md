@@ -30,6 +30,7 @@ Even with the presence of AES (Automated Essay Grading), it works in open-world 
 
 - **Frontend:** [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/), [Shadcn UI](https://ui.shadcn.com/) 
 - **Auth:** [Firebase](https://firebase.google.com/)
+- **Database:** [MongoDB](https://www.mongodb.com/)
 - **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python)
 - **AI Integration:** LLM-based (llama 3.3-70b) text evaluation with [Groq](https://groq.com/) inference API
 
