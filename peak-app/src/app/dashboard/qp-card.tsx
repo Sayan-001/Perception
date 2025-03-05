@@ -45,10 +45,11 @@ export function QPCard({
   const [viewLoading, setViewLoading] = useState(false);
   const [evaluateLoading, setEvaluateLoading] = useState(false);
 
+  // Evaluate the paper (only for teachers)
   const handleEvaluateClick = async () => {
     setEvaluateLoading(true);
     try {
-      const response = await api.put(`/evaluate/${id}`);
+      await api.put(`/evaluate/${id}`);
       router.refresh();
 
       toast.success("Evaluation successful");
@@ -60,6 +61,7 @@ export function QPCard({
     }
   };
 
+  // View the paper (only for teachers and attempted papers for students)
   const handleViewClick = async () => {
     try {
       setViewLoading(true);
@@ -71,6 +73,7 @@ export function QPCard({
     }
   };
 
+  // Reset the evaluation (only for teachers)
   const handleResetClick = async () => {
     try {
       await api.put(`/reset/${id}`);
@@ -82,6 +85,7 @@ export function QPCard({
     }
   };
 
+  // Expire the paper (only for teachers)
   const handleExpireClick = async () => {
     try {
       await api.put(`/expire-paper/${id}`);
@@ -93,6 +97,7 @@ export function QPCard({
     }
   };
 
+  // Unexpire the paper (only for teachers)
   const handleUnexpireClick = async () => {
     try {
       await api.put(`/unexpire-paper/${id}`);
