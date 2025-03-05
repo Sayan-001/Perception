@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
 import {
@@ -10,6 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { api } from "@/axios";
+import { Loading } from "@/components/loading";
+import { UnauthorizedAccess } from "@/components/unauthorized";
 
 interface Scores {
   clarity: number;
@@ -50,10 +52,65 @@ interface TeacherViewProps {
   };
 }
 
-export function TeacherView({ paper }: TeacherViewProps) {
-  const [selectedStudent, setSelectedStudent] = useState<string>(
-    paper.submissions[0]?.student_email || ""
-  );
+interface ViewProps {
+  id: string;
+  email: string;
+}
+
+export function TeacherView({ id, email }: ViewProps) {
+  // 1. Group all useState hooks at the top
+  const [paper, SetPaper] = useState<TeacherViewProps["paper"]>({
+    _id: "",
+    title: "",
+    teacher_email: "",
+    evaluated: false,
+    expired: false,
+    questions: [],
+    submissions: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<string>("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchPaper = async () => {
+      try {
+        const response = await api.post("/paper/teacher-view", {
+          id: id,
+          email: email,
+        });
+        if (mounted) {
+          SetPaper(response.data.paper);
+
+          if (response.data.paper.submissions.length > 0) {
+            setSelectedStudent(
+              response.data.paper.submissions[0].student_email
+            );
+          }
+        }
+      } catch (error: any) {
+        setError(error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchPaper();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, email]);
+
+  if (loading) {
+    return <Loading />;
+  } else if (error) {
+    return <UnauthorizedAccess />;
+  }
 
   const selectedSubmission = paper.submissions.find(
     (sub) => sub.student_email === selectedStudent

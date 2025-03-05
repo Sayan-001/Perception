@@ -25,6 +25,7 @@ export function UnauthorizedAccess() {
           </svg>
         </div>
         <p className="text-gray-600 mb-6">Sorry, the page is not accessible.</p>
+
         <div className="space-y-4">
           <Button
             onClick={() => router.push("/login")}

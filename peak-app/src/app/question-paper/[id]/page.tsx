@@ -1,91 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { api } from "@/axios";
 import { Loading } from "@/components/loading";
 import { UnauthorizedAccess } from "@/components/unauthorized";
-import { NotFound } from "@/components/not-found";
 import { TeacherView } from "../teacher-view";
 import { StudentView } from "../student-view";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
 
-interface PaperData {
-  type: "teacher" | "student";
-  paper: any;
-  attempted?: boolean;
-}
-
 export default function QuestionPaperPage() {
   const params = useParams();
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [paperData, setPaperData] = useState<PaperData | null>(null);
   const [email, setEmail] = useState<string | null>(null);
+  const [type, setType] = useState<"teacher" | "student">("student");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let mounted = true;
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!mounted) return;
+
       if (user?.email) {
         setEmail(user.email);
+        try {
+          const response = await api.get("/get-type", {
+            params: { email: user.email },
+          });
+          if (mounted) {
+            setType(response.data.type);
+          }
+        } catch (error: any) {
+          if (mounted) {
+            setError(error);
+          }
+        }
       } else {
-        router.push("/login");
+        setEmail("unauthorized");
+      }
+
+      if (mounted) {
+        setLoading(false);
       }
     });
 
-    return () => unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
-    const fetchPaperData = async () => {
-      if (!email) return;
-
-      try {
-        const response = await api.post(`/paper/${params.id}`, {
-          paper_id: params.id,
-          viewer_email: email,
-        });
-
-        setPaperData(response.data);
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          setError("not-found");
-        } else if (error.response?.status === 403) {
-          setError("unauthorized");
-        } else {
-          setError("unknown");
-        }
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      mounted = false;
+      unsubscribe();
     };
+  }, []);
 
-    fetchPaperData();
-  }, [params.id, email]);
-
-  if (loading) {
+  if (!email || loading) {
     return <Loading />;
-  }
-
-  if (error === "not-found") {
-    return <NotFound />;
-  }
-
-  if (error === "unauthorized") {
+  } else if (email === "unauthorized") {
     return <UnauthorizedAccess />;
-  }
-
-  if (!paperData) {
-    return null;
   }
 
   return (
     <div className="m-8">
-      {paperData.type === "teacher" ? (
-        <TeacherView paper={paperData.paper} />
+      {type === "teacher" ? (
+        <TeacherView id={params.id} email={email} />
       ) : (
-        <StudentView />
+        <StudentView id={params.id} email={email} />
       )}
     </div>
   );

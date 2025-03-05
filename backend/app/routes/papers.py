@@ -72,69 +72,24 @@ async def create_paper(request: QuestionPaper):
         )
         
 class ViewPaperRequest(BaseModel):
-    paper_id: str
-    viewer_email: str
+    id: str
+    email: str
         
-@router.post("/paper/{paper_id}", response_model=dict)
+@router.post("/paper/teacher-view", response_model=dict)
 async def get_paper(request: ViewPaperRequest):
-    paper_id, viewer_email = request.paper_id, request.viewer_email
+    paper_id, viewer_email = request.id, request.email
     
     try:
         paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
         if paper is None:
             raise HTTPException(status_code=404, detail="Paper not found")
             
-        paper_dict = dict(paper)
-        paper_dict["_id"] = str(paper_dict["_id"])
+        if paper["teacher_email"] != viewer_email:
+            raise HTTPException(status_code=403, detail="Unauthorized")
             
-        if viewer_email == paper["teacher_email"]:
-            return {
-                "type": "teacher",
-                "paper": paper_dict
-            }
-            
-        student_exists = await association.find_one({
-            "teacher_email": paper["teacher_email"],
-            "student_email": viewer_email
-        })
-        
-        if not student_exists:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not authorized to view this paper"
-            )
-        
-        attempted = False
-        student_answers = None
-        
-        for submission in paper.get("submissions", []):
-            if submission["student_email"] == viewer_email:
-                attempted = True
-                student_answers = submission["answers"]
-                break
-
-        questions_data = []
-        for question in paper["questions"]:
-            question_data = {
-                "order": question["order"],
-                "question": question["question"]
-            }
-
-            if attempted:
-                answer = next(
-                    (ans for ans in student_answers if ans["order"] == question["order"]),
-                    None
-                )
-                if answer:
-                    answer_copy = answer.copy()
-                    question_data = question_data | answer_copy
-
-            questions_data.append(question_data)
-
+        paper.pop("_id")
         return {
-            "type": "student",
-            "attempted": attempted,
-            "paper": questions_data
+            "paper": paper
         }
         
     except HTTPException as e:
@@ -305,6 +260,77 @@ async def get_student_papers(email: str):
             status_code=500,
             detail=f"Internal server error: {str(e)}"   
         )
+        
+@router.post("/paper/student-view", response_model=dict)
+async def get_paper(request: ViewPaperRequest):
+    paper_id, viewer_email = request.id, request.email
+    
+    try:
+        paper: QuestionPaper = await question_papers.find_one({"_id": ObjectId(paper_id)})
+        if paper is None:
+            raise HTTPException(status_code=404, detail="Paper not found")
+            
+        submission = next(
+            (sub for sub in paper.get("submissions", []) if sub["student_email"] == viewer_email),
+            None
+        )
+        
+        if submission is None:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+            
+        structure: dict[int, dict] = {}
+        for q in paper["questions"]:
+            structure[q["order"]] = {"question": q["question"]}
+            
+        answers = submission["answers"]
+        
+        for ans in answers:
+            structure[ans["order"]].update({
+                "answer": ans["answer"],
+                "scores": ans["scores"],
+                "feedback": ans["feedback"]
+            })
+            
+        return {
+            "title": paper["title"],
+            "expired": paper["expired"],
+            "evaluated": paper["evaluated"],
+            "qs_and_ans": list(structure.values()),
+            "total_score": submission["total_score"]
+        }
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+        
+@router.post("/paper/attempt-view", response_model=dict)
+async def get_attempt_paper(request: ViewPaperRequest):
+    paper_id, viewer_email = request.id, request.email
+    
+    try:
+        paper: QuestionPaper = await question_papers.find_one({"_id": ObjectId(paper_id)})
+        if paper is None:
+            raise HTTPException(status_code=404, detail="Paper not found")
+            
+        questions = [{"order": q["order"], "question": q["question"]} for q in paper["questions"]]
+        
+        return {
+            "title": paper["title"],
+            "questions": questions
+        }
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
   
 class SingleAnswerRequest(BaseModel):
     order: int
@@ -313,12 +339,13 @@ class SingleAnswerRequest(BaseModel):
     feedback: str = ""
     
 class SubmitAnswerRequest(BaseModel):
+    paper_id: str
     student_email: str
     answer: List[SingleAnswerRequest]
     total_score: float = 0.0
         
-@router.put("/attempt-paper/{paper_id}", response_model=dict)
-async def attempt_paper(paper_id: str, request: SubmitAnswerRequest):
+@router.put("/attempted-paper", response_model=dict)
+async def attempt_paper(request: SubmitAnswerRequest):
     """
     Attempt a paper.
     
@@ -335,12 +362,12 @@ async def attempt_paper(paper_id: str, request: SubmitAnswerRequest):
     - HTTPException(500): Internal server error
     """
     try:
-        paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
+        paper = await question_papers.find_one({"_id": ObjectId(request.paper_id)})
         if paper is None:
             raise HTTPException(status_code=404, detail="Paper not found")
             
         await question_papers.update_one(
-            {"_id": ObjectId(paper_id)},
+            {"_id": ObjectId(request.paper_id)},
             {"$push": {
                 "submissions": {
                     "student_email": request.student_email,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { LoadingProvider } from "@/components/providers/loading-provider";
 import "./globals.css";
 
 // font configurations
@@ -25,8 +26,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={`${inter.className} ${geistMono.variable} antialiased`}>
-        {children}
-        <Toaster richColors />
+        <LoadingProvider>
+          {children}
+          <Toaster richColors />
+        </LoadingProvider>
       </body>
     </html>
   );

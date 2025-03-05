@@ -1,93 +1,53 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { auth } from "@/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { api } from "@/axios";
-import { Loading } from "@/components/loading";
-import { UnauthorizedAccess } from "@/components/unauthorized";
 import { useRouter } from "next/navigation";
-
 import { StudentDashboard } from "./student-view";
 import { TeacherDashboard } from "./teacher-view";
-
-interface UserType {
-  type: "teacher" | "student";
-}
-
-interface ApiResponse {
-  type: UserType["type"];
-}
+import { useLoading } from "@/components/providers/loading-provider";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [email, setEmail] = useState<string | null>(null);
-  const [userType, setUserType] = useState<UserType["type"] | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchUserInfo = useCallback(
-    async (email: string): Promise<UserType["type"]> => {
-      try {
-        const response = await api.get<ApiResponse>("/get-type", {
-          params: { email },
-        });
-
-        return response.data.type;
-      } catch (error) {
-        throw new Error(
-          error instanceof Error ? error.message : "Failed to fetch user type"
-        );
-      }
-    },
-    []
-  );
+  const [userType, setUserType] = useState<"teacher" | "student" | null>(null);
+  const { setIsLoading } = useLoading();
 
   useEffect(() => {
-    const controller = new AbortController();
-    let isMounted = true;
+    setIsLoading(true);
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      try {
-        if (!user?.email) {
-          if (isMounted) {
-            setLoading(false);
-          }
-          return;
-        }
+      if (!user?.email) {
+        router.replace("/login");
+        toast.error("Please login to access the dashboard");
+        return;
+      }
 
-        if (isMounted) {
-          setEmail(user.email);
-          const type = await fetchUserInfo(user.email);
-          setUserType(type);
-        }
+      try {
+        const { data } = await api.get("/get-type", {
+          params: { email: user.email },
+        });
+        setUserType(data.type);
       } catch (error) {
-        if (isMounted) {
-          setError(
-            error instanceof Error ? error.message : "Authentication error"
-          );
-          router.push("/login");
-        }
+        toast.error("Authentication failed");
+        router.replace("/login");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     });
 
     return () => {
-      isMounted = false;
       unsubscribe();
-      controller.abort();
+      setIsLoading(false);
     };
-  }, [router, fetchUserInfo]);
+  }, [router, setIsLoading]);
 
-  if (loading) {
-    return <Loading />;
-  } else if (!email || error) {
-    return <UnauthorizedAccess />;
-  }
+  if (!userType) return null;
 
   return userType === "teacher" ? (
-    <TeacherDashboard email={email} />
+    <TeacherDashboard email={auth.currentUser?.email!} />
   ) : (
-    <StudentDashboard email={email} />
+    <StudentDashboard email={auth.currentUser?.email!} />
   );
 }
