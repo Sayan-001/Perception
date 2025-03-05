@@ -118,7 +118,7 @@ async def evaluate_paper(paper_id: str):
             detail=f"Internal server error: {str(e)}"
         )
         
-@router.put("/api/reset/{paper_id}", response_model=dict)
+@router.put("/reset/{paper_id}", response_model=dict)
 async def reset_evaluation(paper_id: str):
     """
     Reset evaluation for a paper.

@@ -81,7 +81,7 @@ async def get_teachers(email: str):
         teachers_list = [teacher["teacher_email"] for teacher in assc_list]
         
         return {
-            "data": teachers_list
+            "teachers": teachers_list
         }
         
     except Exception as e:
@@ -110,7 +110,7 @@ async def get_students(email: str):
         students_list = [student["student_email"] for student in assc_list]
         
         return {
-            "data": students_list
+            "students": students_list
         }
         
     except Exception as e:
