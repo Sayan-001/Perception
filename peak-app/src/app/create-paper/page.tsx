@@ -2,13 +2,23 @@
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { auth } from "@/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { api } from "@/axios";
-import { UnauthorizedAccess } from "@/components/unauthorized";
+import { Loading } from "@/components/loading";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, Trash2, Save, ArrowLeft, HelpCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 
 interface QuestionAnswer {
   order: number;
@@ -18,9 +28,8 @@ interface QuestionAnswer {
 
 export default function CreatePaper() {
   const router = useRouter();
-
-  const [CurrentUser, setCurrentUser] = useState<any | null>(null);
-
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [questions, setQuestions] = useState<QuestionAnswer[]>([
     { order: 1, question: "", answer: "" },
@@ -28,12 +37,17 @@ export default function CreatePaper() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setCurrentUser(user);
+      setCurrentUser(user);
+      setLoading(false);
+
+      if (!user) {
+        toast.error("Please login to create a paper");
+        router.push("/login");
       }
     });
+
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   function addQuestion() {
     setQuestions((prev) => [
@@ -45,7 +59,6 @@ export default function CreatePaper() {
   function removeQuestion(orderToRemove: number) {
     setQuestions((prev) => {
       const filtered = prev.filter((q) => q.order !== orderToRemove);
-      // Reorder remaining questions
       return filtered.map((q, idx) => ({
         ...q,
         order: idx + 1,
@@ -65,6 +78,11 @@ export default function CreatePaper() {
 
   async function handleSubmit() {
     try {
+      if (!currentUser) {
+        toast.error("You must be logged in");
+        return;
+      }
+
       if (!title.trim()) {
         toast.error("Please enter a title");
         return;
@@ -75,9 +93,9 @@ export default function CreatePaper() {
         return;
       }
 
-      const payload = {
+      const paper = {
         title: title,
-        teacher_email: CurrentUser.email,
+        teacher_email: currentUser.email,
         questions: questions.map((q) => ({
           order: q.order,
           question: q.question,
@@ -87,77 +105,181 @@ export default function CreatePaper() {
         evaluated: false,
         submissions: [],
       };
-
-      const response = await api.post("/create-paper", payload);
+      console.log(paper);
+      await api.post("/paper/create", paper);
       toast.success("Paper created successfully!");
       router.push("/dashboard");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to create paper");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || "An error occurred";
+      toast.error(errorMessage);
     }
   }
 
-  const discardAndReturn = () => {
+  const handleDiscardAndReturn = () => {
     router.push("/dashboard");
   };
 
-  if (!CurrentUser) {
-    return <UnauthorizedAccess />;
+  if (loading) {
+    return <Loading />;
+  }
+
+  if (!currentUser) {
+    return null; // Will redirect in useEffect
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8 pb-20 gap-6 sm:p-20">
-      <div className="w-full max-w-2xl">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter paper title"
-          className="w-full p-3 rounded-lg border border-gray-300 mb-6"
-        />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Create New Assessment
+          </h1>
+          <p className="text-gray-600">
+            Design your questions and provide model answers
+          </p>
+        </div>
 
-        {questions.map((q) => (
-          <Card key={q.order} className="mb-6 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Question {q.order}</h3>
-              {questions.length > 1 && (
-                <Button
-                  variant="destructive"
-                  onClick={() => removeQuestion(q.order)}
-                  size="sm"
-                >
-                  Remove
-                </Button>
-              )}
+        {/* Main Content */}
+        <Card className="shadow-lg border-0 overflow-hidden mb-8">
+          <CardHeader className="bg-white border-b border-gray-100 px-6 py-5">
+            <div className="space-y-2">
+              <Label
+                htmlFor="paper-title"
+                className="text-sm font-medium text-gray-700"
+              >
+                Assessment Title
+              </Label>
+              <Input
+                id="paper-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter a descriptive title"
+                className="text-lg font-medium focus-visible:ring-primary"
+              />
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-6 bg-white space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-semibold text-gray-800">Questions</h2>
+              <div className="text-sm text-gray-500">
+                {questions.length} question(s)
+              </div>
             </div>
 
-            <Textarea
-              value={q.question}
-              onChange={(e) =>
-                handleQuestionChange(q.order, "question", e.target.value)
-              }
-              placeholder="Enter your question"
-              className="mb-4"
-            />
+            <Separator className="my-4" />
 
-            <Textarea
-              value={q.answer}
-              onChange={(e) =>
-                handleQuestionChange(q.order, "answer", e.target.value)
-              }
-              placeholder="Enter the answer"
-            />
-          </Card>
-        ))}
+            <div className="space-y-6">
+              {questions.map((q, index) => (
+                <motion.div
+                  key={q.order}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card className="border border-gray-200 shadow-sm overflow-hidden">
+                    <CardHeader className="bg-gray-50 px-4 py-3 flex flex-row items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium">
+                          {q.order}
+                        </div>
+                        <h3 className="font-medium text-gray-800">
+                          Question {q.order}
+                        </h3>
+                      </div>
+                      {questions.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeQuestion(q.order)}
+                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={`question-${q.order}`}
+                          className="text-sm font-medium text-gray-700 flex items-center gap-1"
+                        >
+                          Question{" "}
+                          <HelpCircle className="h-3 w-3 text-gray-400" />
+                        </Label>
+                        <Textarea
+                          id={`question-${q.order}`}
+                          value={q.question}
+                          onChange={(e) =>
+                            handleQuestionChange(
+                              q.order,
+                              "question",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Enter your question here"
+                          className="min-h-[100px] resize-none focus-visible:ring-primary"
+                        />
+                      </div>
 
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={`answer-${q.order}`}
+                          className="text-sm font-medium text-gray-700 flex items-center gap-1"
+                        >
+                          Model Answer{" "}
+                          <HelpCircle className="h-3 w-3 text-gray-400" />
+                        </Label>
+                        <Textarea
+                          id={`answer-${q.order}`}
+                          value={q.answer}
+                          onChange={(e) =>
+                            handleQuestionChange(
+                              q.order,
+                              "answer",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Enter the expected answer here"
+                          className="min-h-[100px] resize-none focus-visible:ring-primary"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-between p-6 bg-gray-50 border-t border-gray-100">
+            <Button
+              variant="outline"
+              onClick={addQuestion}
+              className="flex items-center gap-1"
+            >
+              <PlusCircle className="h-4 w-4" /> Add Question
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Action Buttons */}
         <div className="flex gap-4 justify-end mt-6">
-          <Button variant="destructive" onClick={discardAndReturn}>
-            Discard and Return
+          <Button
+            variant="outline"
+            onClick={handleDiscardAndReturn}
+            className="flex items-center gap-1 border-gray-300"
+          >
+            <ArrowLeft className="h-4 w-4" /> Cancel
           </Button>
-          <Button variant="outline" onClick={addQuestion}>
-            Add Question
+
+          <Button
+            onClick={handleSubmit}
+            className="flex items-center gap-1 bg-primary hover:bg-primary/90"
+          >
+            <Save className="h-4 w-4" /> Save Assessment
           </Button>
-          <Button onClick={handleSubmit}>Create Paper</Button>
         </div>
       </div>
     </div>

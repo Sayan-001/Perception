@@ -1,50 +1,41 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, status
+from pydantic import EmailStr, BaseModel
 from app.database.connections import association, types
+from app.utils.routelogger import log_route
 
 router = APIRouter(prefix="/api")
 
-class TeacherStudentAssociation(BaseModel):
-    teacher_email: str
-    student_email: str
+class Association(BaseModel):
+    teacher_email: EmailStr
+    student_email: EmailStr
     
-@router.post("/add-tsa", response_model=dict)
-async def add_tsa(request: TeacherStudentAssociation):
-    """
-    Add a teacher-student association to the database.
-    
-    Args:
-    - request: TeacherStudentAssociation: The request model containing the teacher and student emails.
-    
-    Returns:
-    - dict: A dictionary containing the id of the inserted document.
-    
-    Raises:
-    - HTTPException: If the association already exists, student or teacher is not found.
-    - HTTPException: If there is an internal server error.
-    """
-    
+@router.post("/tsa", response_model=dict, status_code=status.HTTP_201_CREATED)
+@log_route(path="/tsa", method="POST")
+async def add_tsa(request: Association):
+    """Add a teacher-student association to the database."""
+        
     try:
         exists = await association.find_one(request.model_dump())
+        
         if exists is not None:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="Association already exists"
             )
             
-        stud_exists = await types.find_one({"email": request.student_email, "type": "student"})
+        exists = await types.find_one({"email": request.student_email, "type": "student"})
         
-        if stud_exists is None:
+        if exists is None:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Student not found"
             )
             
-        teach_exists = await types.find_one({"email": request.teacher_email, "type": "teacher"})
+        exists = await types.find_one({"email": request.teacher_email, "type": "teacher"})
         
-        if teach_exists is None:
+        if exists is None:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Teacher not found"
             )
         
@@ -53,28 +44,45 @@ async def add_tsa(request: TeacherStudentAssociation):
         return {
             "id": str(resp.inserted_id)
         }
+        
     except HTTPException as e:
         raise e
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         )
         
-@router.get("/get-teachers", response_model=dict)
-async def get_teachers(email: str):
-    """
-    Get all teachers associated with a student.
+@router.delete("/tsa", response_model=dict, status_code=status.HTTP_200_OK)
+@log_route(path="/tsa", method="DELETE")
+async def delete_tsa(request: Association):
+    """Remove a teacher-student association from the database."""
     
-    Args:
-    - request: GetTeachersRequest: The request model containing the student email.
-    
-    Returns:
-    - dict: A dictionary containing the list of teacher emails.
-    
-    Raises:
-    - HTTPException: If there is an internal server error.
-    """
+    try:
+        result = await association.delete_one(request.model_dump())
+        
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Association not found"
+            )
+            
+        return {
+            "message": "Association deleted successfully"
+        }
+        
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+        
+@router.get("/teacherlist", response_model=dict, status_code=status.HTTP_200_OK)
+@log_route(path="/teacherlist", method="GET")
+async def get_teachers(email: EmailStr):
+    """Get all teachers associated with a student."""
     
     try:
         assc_list = await association.find({"student_email": email}).to_list()
@@ -86,24 +94,14 @@ async def get_teachers(email: str):
         
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         )
         
-@router.get("/get-students", response_model=dict)
-async def get_students(email: str):
-    """
-    Get all students associated with a teacher.
-    
-    Args:
-    - request: GetStudentsRequest: The request model containing the teacher email.
-    
-    Returns:
-    - dict: A dictionary containing the list of student emails.
-    
-    Raises:
-    - HTTPException: If there is an internal server error.
-    """
+@router.get("/studentlist", response_model=dict, status_code=status.HTTP_200_OK)
+@log_route(path="/studentlist", method="GET")
+async def get_students(email: EmailStr):
+    """Get all students associated with a teacher."""
     
     try:
         assc_list = await association.find({"teacher_email": email}).to_list()
@@ -115,7 +113,6 @@ async def get_students(email: str):
         
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-            
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"      
         ) 

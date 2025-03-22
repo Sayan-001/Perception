@@ -25,7 +25,7 @@ export default function DashboardPage() {
       }
 
       try {
-        const { data } = await api.get("/get-type", {
+        const { data } = await api.get("/type", {
           params: { email: user.email },
         });
         setUserType(data.type);

@@ -47,7 +47,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
         password
       );
 
-      await api.post("/add-type", {
+      await api.post("/type", {
         email: userCredential.user.email,
         user_type: type,
       });

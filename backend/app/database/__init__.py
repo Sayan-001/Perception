@@ -6,7 +6,6 @@ MongoDB connection and model management for Perception.
 Exports:
 - Database initialization
 - Collection connections
-- Database utility functions
 """
 
 from .connections import (

@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { api } from "@/axios";
 import { Loading } from "@/components/loading";
-import { UnauthorizedAccess } from "@/components/unauthorized";
 import { TeacherView } from "../teacher-view";
 import { StudentView } from "../student-view";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/firebase";
+import { toast } from "sonner";
 
 export default function QuestionPaperPage() {
   const params = useParams();
-  const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
-  const [type, setType] = useState<"teacher" | "student">("student");
+  const [type, setType] = useState<"teacher" | "student" | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
@@ -26,24 +26,26 @@ export default function QuestionPaperPage() {
       if (user?.email) {
         setEmail(user.email);
         try {
-          const response = await api.get("/get-type", {
+          const response = await api.get("/type", {
             params: { email: user.email },
           });
           if (mounted) {
             setType(response.data.type);
           }
-        } catch (error: any) {
+        } catch (err: any) {
           if (mounted) {
-            setError(error);
+            const errorMessage =
+              err.response?.data?.detail || "An error occurred";
+            toast.error(errorMessage);
+            router.push("/dashboard");
           }
         }
       } else {
-        setEmail("unauthorized");
+        router.push("/login");
+        toast.error("You need to login to view this page");
       }
 
-      if (mounted) {
-        setLoading(false);
-      }
+      if (mounted) setLoading(false);
     });
 
     return () => {
@@ -52,18 +54,20 @@ export default function QuestionPaperPage() {
     };
   }, []);
 
-  if (!email || loading) {
-    return <Loading />;
-  } else if (email === "unauthorized") {
-    return <UnauthorizedAccess />;
-  }
+  if (loading) return <Loading />;
 
   return (
     <div className="m-8">
       {type === "teacher" ? (
-        <TeacherView id={params.id} email={email} />
+        <TeacherView
+          id={typeof params.id === "string" ? params.id : ""}
+          email={email || ""}
+        />
       ) : (
-        <StudentView id={params.id} email={email} />
+        <StudentView
+          id={typeof params.id === "string" ? params.id : ""}
+          email={email || ""}
+        />
       )}
     </div>
   );
