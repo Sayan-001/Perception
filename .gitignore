@@ -9,6 +9,8 @@
 ### Firebase Patch ###
 .runtimeconfig.json
 .firebase/
+admin-cred.json
+api_docs.json
 
 ### NextJS ###
 # dependencies

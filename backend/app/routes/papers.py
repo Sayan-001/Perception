@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field, EmailStr
-from bson import ObjectId
 from typing import List, Literal
-from app.database.connections import question_papers, association, types
-from app.utils.routelogger import log_route
-from datetime import datetime
+
+from bson import ObjectId
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, EmailStr, Field
+
+from app.database import association, question_papers, types
 
 router = APIRouter(prefix="/api")
 
@@ -42,7 +42,6 @@ class Paper(BaseModel):
     submissions: List[StudentSubmission]
     
 @router.get("/paper/list", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/paper/list", method="GET")
 async def get_paperlist(email: str, user_type: Literal["teacher", "student"]):
     """Retrieve all papers with just the metadata (required for the cards), based on user type."""
     
@@ -93,7 +92,6 @@ async def get_paperlist(email: str, user_type: Literal["teacher", "student"]):
         )
 
 @router.post("/paper/create", response_model=dict, status_code=status.HTTP_201_CREATED)
-@log_route(path="/paper/create", method="POST")
 async def create_paper(paper: Paper):
     """Create a new question paper."""
     
@@ -121,7 +119,6 @@ async def create_paper(paper: Paper):
         )
         
 @router.get("/paper/view/{paper_id}", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/paper/view/{paper_id}", method="GET")
 async def get_paper(paper_id: str, viewer_email: str, viewer_type: Literal["teacher", "student"]):
     """Retrieve a paper with all the details."""
     
@@ -178,7 +175,6 @@ async def get_paper(paper_id: str, viewer_email: str, viewer_type: Literal["teac
         )
         
 @router.get("/paper/attempt/{paper_id}", response_model=dict)
-@log_route(path="/paper/attempt/{paper_id}", method="GET")
 async def get_attempt_paper(paper_id: str, student_email: str):
     """Retrieve a paper for attempting."""
     
@@ -216,7 +212,6 @@ class SubmitAnswerRequest(BaseModel):
     answer: List[BaseAnswer]
         
 @router.post("/paper/attempt", response_model=dict)
-@log_route(path="/paper/attempt", method="POST")
 async def attempt_paper(request: SubmitAnswerRequest):
     """Attempt/Save a paper."""
     
@@ -264,7 +259,6 @@ async def attempt_paper(request: SubmitAnswerRequest):
         )
         
 @router.put("/paper/expire/{paper_id}", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/paper/expire/{paper_id}", method="PUT")
 async def expire_paper(paper_id: str):
     """Expire a paper."""
     
@@ -292,7 +286,6 @@ async def expire_paper(paper_id: str):
         )
         
 @router.put("/paper/unexpire/{paper_id}", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/paper/unexpire/{paper_id}", method="PUT")
 async def unexpire_paper(paper_id: str):
     """Unexpire a paper."""
     
@@ -319,7 +312,6 @@ async def unexpire_paper(paper_id: str):
         )
         
 @router.delete("/paper/{paper_id}", status_code=status.HTTP_204_NO_CONTENT)
-@log_route(path="/paper/{paper_id}", method="DELETE")
 async def delete_paper(paper_id: str):
     """Delete a paper if it belongs to the requesting teacher."""
     

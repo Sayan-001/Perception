@@ -10,4 +10,4 @@ This package contains the core application logic:
 - AI-based evaluation using Groq
 """
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"

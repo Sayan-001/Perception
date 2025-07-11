@@ -1,11 +1,12 @@
 """
-This module contains utility functions that are used throughout the application.
+API Utilities 
+
+Exports:
+- MONGODB_URI: MongoDB connection string
+- GROQ_API_KEY: API key for GROQ services
+- ENVIRONMENT: Environment configuration (development/production)
 """
 
-from .keys import MONGODB_URI
-from .keys import GROQ_API_KEY
-from .keys import API_DOCS_PATH
-from .routelogger import log_route
-from .routelogger import print_route_db
+from .vars import ENVIRONMENT, GROQ_API_KEY, MONGODB_URI
 
-__all__ = ["MONGODB_URI", "GROQ_API_KEY", "API_DOCS_PATH", "log_route", "print_route_db"]
+__all__ = ["MONGODB_URI", "GROQ_API_KEY", "ENVIRONMENT"]

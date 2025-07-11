@@ -1,13 +1,13 @@
 from typing import Literal
+
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, EmailStr
+
 from app.database.connections import types
-from pydantic import EmailStr, BaseModel
-from app.utils.routelogger import log_route
 
 router = APIRouter(prefix="/api")
 
 @router.get("/type", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/type", method="GET")
 async def get_type(email: str):
     """Used to get the type of user."""
     
@@ -36,7 +36,6 @@ class AddUserType(BaseModel):
     user_type: Literal["teacher", "student"]
         
 @router.post("/type", response_model=dict, status_code=status.HTTP_201_CREATED)
-@log_route(path="/type", method="POST")
 async def add_type(request: AddUserType):
     """Used to add the type of user if not exists, else raise an error."""
     

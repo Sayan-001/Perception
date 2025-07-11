@@ -1,5 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from app.utils.keys import MONGODB_URI
+
+from app.utils.vars import MONGODB_URI
+
 
 class Database:
     client: AsyncIOMotorClient = None

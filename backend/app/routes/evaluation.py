@@ -1,32 +1,29 @@
-import time
 import json
-from bson import ObjectId
+import time
 
-from fastapi import APIRouter, HTTPException
+from bson import ObjectId
+from fastapi import APIRouter, HTTPException, status
 from groq import Groq
 
+from app.database import question_papers
 from app.system_params import system_prompt
-from app.database.connections import question_papers
-
-from app.utils.keys import GROQ_API_KEY
-from app.utils.routelogger import log_route
+from app.utils import GROQ_API_KEY
 
 groqclient = Groq(api_key=GROQ_API_KEY)
 
 router = APIRouter(prefix="/api")
 
 @router.put("/evaluate/{paper_id}", response_model=dict)
-@log_route(path="/evaluate/{paper_id}", method="PUT")
 async def evaluate_paper(paper_id: str):
     """Evaluate a paper using Groq."""
     
     try:
         paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
         if not paper:
-            raise HTTPException(status_code=404, detail="Paper not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
 
         if not paper.get("submissions"):
-            raise HTTPException(status_code=400, detail="No submissions to evaluate")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No submissions to evaluate")
 
         questions = dict()
         teacher_answers = dict()
@@ -68,12 +65,12 @@ async def evaluate_paper(paper_id: str):
                 
                 except (json.JSONDecodeError, KeyError, ValueError) as e:
                     raise HTTPException(
-                        status_code=500,
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail=f"AI evaluation failed: {str(e)}"
                     )
                 except Exception as e:
                     raise HTTPException(
-                        status_code=500,
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail=f"Failed to process evaluation: {str(e)}"
                     )
                 
@@ -92,7 +89,7 @@ async def evaluate_paper(paper_id: str):
         
         if result.modified_count == 0:
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update paper with evaluations"
             )
         
@@ -104,25 +101,24 @@ async def evaluate_paper(paper_id: str):
         raise e
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         )
         
 @router.put("/reset/{paper_id}", response_model=dict)
-@log_route(path="/reset/{paper_id}", method="PUT")
 async def reset_evaluation(paper_id: str):
     """Reset evaluation for a paper."""
     
     try:
         paper = await question_papers.find_one({"_id": ObjectId(paper_id)})
         if not paper:
-            raise HTTPException(status_code=404, detail="Paper not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
 
         if not paper.get("submissions"):
-            raise HTTPException(status_code=400, detail="No submissions to evaluate")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No submissions to evaluate")
         
         if paper["evaluated"] == False:
-            raise HTTPException(status_code=400, detail="Paper has not been evaluated")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Paper has not been evaluated")
         
         evaluation = {
             "scores": {
@@ -151,7 +147,7 @@ async def reset_evaluation(paper_id: str):
         
         if result.modified_count == 0:
             raise HTTPException(
-                status_code=500,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to reset evaluation for paper"
             )
         
@@ -161,6 +157,6 @@ async def reset_evaluation(paper_id: str):
 
     except Exception as e:
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         ) 

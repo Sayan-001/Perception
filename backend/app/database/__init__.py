@@ -1,20 +1,15 @@
 """
 Database Package
---------------
-MongoDB connection and model management for Perception.
 
 Exports:
-- Database initialization
-- Collection connections
+- db: Database connection instance
+- init_db: Function to initialize the database
+- association: Collection for teacher-student associations
+- question_papers: Collection for question papers
+- types: Collection for user types
 """
 
-from .connections import (
-    db,
-    init_db,
-    association,
-    question_papers,
-    types
-)
+from .connections import association, db, init_db, question_papers, types
 
 __all__ = [
     "db",

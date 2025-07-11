@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import EmailStr, BaseModel
-from app.database.connections import association, types
-from app.utils.routelogger import log_route
+from pydantic import BaseModel, EmailStr
+
+from app.database import association, types
 
 router = APIRouter(prefix="/api")
 
@@ -10,7 +10,6 @@ class Association(BaseModel):
     student_email: EmailStr
     
 @router.post("/tsa", response_model=dict, status_code=status.HTTP_201_CREATED)
-@log_route(path="/tsa", method="POST")
 async def add_tsa(request: Association):
     """Add a teacher-student association to the database."""
         
@@ -54,7 +53,6 @@ async def add_tsa(request: Association):
         )
         
 @router.delete("/tsa", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/tsa", method="DELETE")
 async def delete_tsa(request: Association):
     """Remove a teacher-student association from the database."""
     
@@ -80,7 +78,6 @@ async def delete_tsa(request: Association):
         )
         
 @router.get("/teacherlist", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/teacherlist", method="GET")
 async def get_teachers(email: EmailStr):
     """Get all teachers associated with a student."""
     
@@ -99,7 +96,6 @@ async def get_teachers(email: EmailStr):
         )
         
 @router.get("/studentlist", response_model=dict, status_code=status.HTTP_200_OK)
-@log_route(path="/studentlist", method="GET")
 async def get_students(email: EmailStr):
     """Get all students associated with a teacher."""
     
