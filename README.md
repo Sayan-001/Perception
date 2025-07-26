@@ -25,10 +25,27 @@ Even with the presence of AES (Automated Essay Grading), it works in open-world 
 - Provides **personalized feedback** and **suggestions** for improvement.
 - Ensures **fair and unbiased** evaluation across all students by using pre-defined rules.
 
+### 📸 Application Screenshots
+
+<div align="center">
+
+|       Authentication       |           Teacher Dashboard            |
+| :------------------------: | :------------------------------------: |
+| ![Login](Images/Pimg1.png) | ![Teacher Dashboard](Images/Pimg2.png) |
+
+|        Question Management        |            Question Creation            |
+| :-------------------------------: | :-------------------------------------: |
+| ![Teacher View](Images/Pimg3.png) | ![Creating Questions](Images/Pimg4.png) |
+
+|           Student Dashboard            |              AI Evaluation              |
+| :------------------------------------: | :-------------------------------------: |
+| ![Student Dashboard](Images/Pimg5.png) | ![Student Evaluation](Images/Pimg6.png) |
+
+</div>
 
 ## 🛠 Tech Stack
 
-- **Frontend:** [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/), [Shadcn UI](https://ui.shadcn.com/) 
+- **Frontend:** [Next.js](https://nextjs.org/), [Tailwind CSS](https://tailwindcss.com/), [Shadcn UI](https://ui.shadcn.com/)
 - **Auth:** [Firebase](https://firebase.google.com/)
 - **Database:** [MongoDB](https://www.mongodb.com/)
 - **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python)
@@ -36,7 +53,7 @@ Even with the presence of AES (Automated Essay Grading), it works in open-world 
 
 ## To Run
 
-### 1. Start the Frontend  
+### 1. Start the Frontend
 
 ```bash
 cd peak-app
@@ -44,12 +61,12 @@ npm install
 npm run dev
 ```
 
-### 2. Start the Backend  
+### 2. Start the Backend
 
 ```bash
 cd backend
 
-#create a virtual environment 
+#create a virtual environment
 python -m venv venv
 
 # Activate the virtual environment (Use the appropriate command for your OS)
