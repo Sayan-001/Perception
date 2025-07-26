@@ -4,7 +4,7 @@ from app.utils.vars import MONGODB_URI
 
 
 class Database:
-    client: AsyncIOMotorClient = None
+    client: AsyncIOMotorClient | None = None
     
     def get_db(self):
         if not self.client:

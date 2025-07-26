@@ -3,7 +3,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
-from app.database.connections import types
+from app.database import types
 
 router = APIRouter(prefix="/api")
 

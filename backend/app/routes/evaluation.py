@@ -7,7 +7,7 @@ from groq import Groq
 
 from app.database import question_papers
 from app.system_params import system_prompt
-from app.utils import GROQ_API_KEY
+from app.utils.vars import GROQ_API_KEY
 
 groqclient = Groq(api_key=GROQ_API_KEY)
 
@@ -117,7 +117,7 @@ async def reset_evaluation(paper_id: str):
         if not paper.get("submissions"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No submissions to evaluate")
         
-        if paper["evaluated"] == False:
+        if not paper["evaluated"]:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Paper has not been evaluated")
         
         evaluation = {
