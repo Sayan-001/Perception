@@ -1,17 +1,32 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.sql import func
+
 from app.database import Base
+from app.models.enums import UserType
 
 
-class User(Base):
-    __tablename__ = "users"
+class AppUser(Base):
+    __tablename__ = "app_users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    email = Column(String, primary_key=True, index=True)
+    full_name = Column(String, nullable=False)
+    user_type = Column(SQLEnum(UserType), nullable=False)
     is_active = Column(Boolean, default=True)
 
-    # Track when the user was created
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Association(Base):
+    __tablename__ = "associations"
+
+    t_email = Column(
+        String, ForeignKey("app_users.email", ondelete="CASCADE"), primary_key=True
+    )
+    s_email = Column(
+        String, ForeignKey("app_users.email", ondelete="CASCADE"), primary_key=True
+    )
