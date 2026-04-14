@@ -1,0 +1,102 @@
+perception/
+├── docker-compose.yml
+├── .github/
+│   └── workflows/
+│       ├── ci-frontend.yml
+│       └── ci-backend.yml
+│
+├── frontend/
+│   ├── next.config.ts
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   ├── package.json
+│   ├── vitest.config.ts
+│   ├── playwright.config.ts
+│   ├── .env.local.example
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.tsx
+│   │   │   ├── middleware.ts
+│   │   │   ├── (auth)/
+│   │   │   │   ├── login/page.tsx
+│   │   │   │   └── signup/page.tsx
+│   │   │   ├── (protected)/
+│   │   │   │   ├── layout.tsx
+│   │   │   │   ├── dashboard/page.tsx
+│   │   │   │   ├── papers/
+│   │   │   │   │   ├── new/page.tsx
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       ├── page.tsx
+│   │   │   │   │       ├── attempt/page.tsx
+│   │   │   │   │       └── submissions/[sid]/page.tsx
+│   │   │   │   └── settings/page.tsx
+│   │   │   └── api/ (if needed for SSE proxy)
+│   │   ├── components/
+│   │   │   ├── ui/ (shadcn primitives)
+│   │   │   ├── paper-card.tsx
+│   │   │   ├── question-navigator.tsx
+│   │   │   ├── score-breakdown.tsx
+│   │   │   ├── evaluation-progress.tsx
+│   │   │   ├── confirm-dialog.tsx
+│   │   │   └── countdown-timer.tsx
+│   │   ├── lib/
+│   │   │   ├── firebase.ts
+│   │   │   ├── api.ts
+│   │   │   └── utils.ts
+│   │   ├── schemas/
+│   │   │   ├── paper.ts
+│   │   │   ├── submission.ts
+│   │   │   └── user.ts
+│   │   ├── stores/
+│   │   │   ├── auth-store.ts
+│   │   │   └── loading-store.ts
+│   │   └── types/
+│   │       └── index.ts
+│   └── tests/
+│       ├── unit/
+│       ├── components/
+│       └── e2e/
+│
+├── backend/
+│   ├── main.py
+│   ├── pyproject.toml
+│   ├── Dockerfile
+│   ├── .env.example
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── config.py (BaseSettings)
+│   │   ├── database.py
+│   │   ├── dependencies.py (auth, current_user)
+│   │   ├── models/
+│   │   │   ├── user.py
+│   │   │   ├── paper.py
+│   │   │   └── submission.py
+│   │   ├── schemas/
+│   │   │   ├── user.py
+│   │   │   ├── paper.py
+│   │   │   └── submission.py
+│   │   ├── services/
+│   │   │   ├── user_service.py
+│   │   │   ├── paper_service.py
+│   │   │   ├── submission_service.py
+│   │   │   └── evaluation/
+│   │   │       ├── base.py (abstract provider)
+│   │   │       ├── groq_provider.py
+│   │   │       └── service.py
+│   │   ├── routes/
+│   │   │   ├── __init__.py
+│   │   │   ├── users.py
+│   │   │   ├── papers.py
+│   │   │   └── submissions.py
+│   │   ├── workers/
+│   │   │   └── evaluation_worker.py
+│   │   └── utils/
+│   │       ├── logging.py
+│   │       └── cache.py
+│   └── tests/
+│       ├── conftest.py
+│       ├── test_users.py
+│       ├── test_papers.py
+│       └── test_submissions.py
+│
+└── README.md
