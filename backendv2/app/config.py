@@ -16,9 +16,17 @@ class Settings(BaseSettings):
     # Generative AI Integrations
     GROQ_API_KEY: str
 
+    # Environment (development, production)
+    ENVIRONMENT: str
+
+    # Limits
+    PAPERS_CREATED_MONTHLY_LIMIT: int
+    SUBMISSIONS_MADE_MONTHLY_LIMIT: int
+    LLM_TOKEN_BALANCE_MONTHLY_LIMIT: int
+
     model_config = SettingsConfigDict(
         env_file=".env", env_ignore_empty=True, extra="ignore"
     )
 
 
-settings = Settings()
+settings = Settings()  # type: ignore

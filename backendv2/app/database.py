@@ -3,11 +3,13 @@ from sqlalchemy.orm import declarative_base
 
 from app.config import settings
 
-# Create async engine. Neon uses serverless connection pooling,
-# but it's good practice to set pool sizes to prevent connection exhaustion.
+db_url = settings.DATABASE_URL
+if "sslmode=" in db_url:
+    db_url = db_url.replace("sslmode=", "ssl=")
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=True,  # Useful for debugging, set to False in production
+    db_url,
+    echo=True if settings.ENVIRONMENT == "development" else False,
     pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,

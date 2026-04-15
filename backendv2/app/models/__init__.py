@@ -3,7 +3,6 @@ from app.models.paper import PaperQuestions, Question, QuestionPaper
 from app.models.submission import Answer, Submission
 from app.models.user import AppUser, Association
 
-# Expose bases and models for Alembic base discovery
 __all__ = [
     "UserType",
     "EvaluationStatus",
