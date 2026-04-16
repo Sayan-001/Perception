@@ -1,7 +1,10 @@
 import pytest
 import time
+import structlog
 from app.schemas.evaluation import EvaluationResponse
 from app.services.evaluation_service import EvaluationService
+
+logger = structlog.get_logger()
 
 
 @pytest.mark.asyncio
@@ -13,7 +16,7 @@ async def test_evaluate_real_request():
     student_answer = "tokyo"
     rubric = ""
 
-    start_time = time.process_time()
+    _ = time.process_time()
     real_start_time = time.time()
 
     result = await service.evaluate(
@@ -25,17 +28,18 @@ async def test_evaluate_real_request():
 
     latency = time.time() - real_start_time
 
-    # Assert structure and typical bounds
     assert isinstance(result, EvaluationResponse)
     assert 0.0 <= result.score <= 10.0
     assert isinstance(result.feedback, str)
     assert len(result.feedback) > 0
 
-    # Log metrics to stdout (run pytest with -s to see this output)
-    print("\nReal Request Metrics:- ")
-    print(f"Latency: {latency:.4f} seconds")
-    print(f"Score: {result.score}")
-    print(f"Feedback: {result.feedback}")
+    # Log metrics to stdout
+    logger.info(
+        "Real Request Metrics",
+        latency=round(latency, 4),
+        score=result.score,
+        feedback=result.feedback,
+    )
 
 
 @pytest.mark.asyncio
@@ -52,9 +56,11 @@ async def test_evaluate_real_request_poor_answer():
     latency = time.time() - start_time
 
     assert isinstance(result, EvaluationResponse)
-    assert result.score < 5.0  # Should be scored poorly
+    assert result.score < 5.0
 
-    print("\nPoor Answer Metrics:- ")
-    print(f"Latency: {latency:.4f} seconds")
-    print(f"Score: {result.score}")
-    print(f"Feedback: {result.feedback}")
+    logger.info(
+        "Poor Answer Metrics",
+        latency=round(latency, 4),
+        score=result.score,
+        feedback=result.feedback,
+    )

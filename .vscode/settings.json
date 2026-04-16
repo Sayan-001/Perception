@@ -1,0 +1,5 @@
+{
+  "python.testing.pytestArgs": ["backendv2"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
+}

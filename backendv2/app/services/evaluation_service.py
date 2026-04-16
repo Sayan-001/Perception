@@ -15,8 +15,12 @@ You must return a JSON object with the keys "score" (A number between 0 and 10, 
 
 
 class EvaluationService:
-    def __init__(self, eval_model: str = "llama-3.3-70b-versatile"):
-        self.client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+    def __init__(
+        self,
+        api_key: str = settings.GROQ_API_KEY,
+        eval_model: str = "llama-3.3-70b-versatile",
+    ):
+        self.client = AsyncGroq(api_key=api_key)
         self.eval_model = eval_model
 
     async def evaluate(
