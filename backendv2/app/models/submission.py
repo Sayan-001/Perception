@@ -1,6 +1,7 @@
 from sqlalchemy import Boolean, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, ForeignKeyConstraint, Integer, Numeric, String, Text
+from sqlalchemy import (ForeignKey, ForeignKeyConstraint, Integer, Numeric,
+                        String, Text)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 

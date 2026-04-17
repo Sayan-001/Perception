@@ -2,10 +2,6 @@ from pydantic import BaseModel, Field
 
 
 class EvaluationResponse(BaseModel):
-    """
-    Response schema for the evaluation of a student's answer.
-    """
-
     score: float = Field(
         ge=0.0,
         le=10.0,

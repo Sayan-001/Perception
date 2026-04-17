@@ -1,16 +1,14 @@
-import pytest
 import time
-import structlog
+
+import pytest
+
 from app.schemas.evaluation import EvaluationResponse
 from app.services.evaluation_service import EvaluationService
-
-logger = structlog.get_logger()
+from app.utils.logging import logger
 
 
 @pytest.mark.asyncio
 async def test_evaluate_real_request():
-    service = EvaluationService()
-
     question = "What is the capital of Japan?"
     teacher_answer = "Tokyo"
     student_answer = "tokyo"
@@ -19,7 +17,7 @@ async def test_evaluate_real_request():
     _ = time.process_time()
     real_start_time = time.time()
 
-    result = await service.evaluate(
+    result = await EvaluationService.evaluate(
         question=question,
         teacher_answer=teacher_answer,
         student_answer=student_answer,
@@ -33,7 +31,6 @@ async def test_evaluate_real_request():
     assert isinstance(result.feedback, str)
     assert len(result.feedback) > 0
 
-    # Log metrics to stdout
     logger.info(
         "Real Request Metrics",
         latency=round(latency, 4),
@@ -44,10 +41,8 @@ async def test_evaluate_real_request():
 
 @pytest.mark.asyncio
 async def test_evaluate_real_request_poor_answer():
-    service = EvaluationService()
-
     start_time = time.time()
-    result = await service.evaluate(
+    result = await EvaluationService.evaluate(
         question="Explain the theory of relativity.",
         teacher_answer="E=mc^2 and the laws of physics are the same for all non-accelerating observers.",
         student_answer="I don't know, an apple fell on his head?",

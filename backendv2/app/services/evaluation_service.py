@@ -1,6 +1,7 @@
+from groq import AsyncGroq
+
 from app.config import settings
 from app.schemas.evaluation import EvaluationResponse
-from groq import AsyncGroq
 
 SYSTEM_PROMPT = """
 ### Instructions:
@@ -15,16 +16,12 @@ You must return a JSON object with the keys "score" (A number between 0 and 10, 
 
 
 class EvaluationService:
-    def __init__(
-        self,
-        api_key: str = settings.GROQ_API_KEY,
-        eval_model: str = "llama-3.3-70b-versatile",
-    ):
-        self.client = AsyncGroq(api_key=api_key)
-        self.eval_model = eval_model
+    client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+    eval_model = "llama-3.3-70b-versatile"
 
+    @classmethod
     async def evaluate(
-        self,
+        cls,
         question: str,
         teacher_answer: str,
         student_answer: str,
@@ -32,7 +29,7 @@ class EvaluationService:
     ) -> EvaluationResponse:
         to_eval = f"Question: {question}\nTeacher's Answer: {teacher_answer}\nStudent's Answer: {student_answer}\nEvaluation Rubric: {rubric}"
 
-        completion = await self.client.chat.completions.create(
+        completion = await cls.client.chat.completions.create(
             messages=[
                 {
                     "role": "system",
@@ -43,7 +40,7 @@ class EvaluationService:
                     "content": to_eval.strip(),
                 },
             ],
-            model=self.eval_model,
+            model=cls.eval_model,
             max_tokens=256,
             response_format={"type": "json_object"},
             temperature=0.4,
@@ -54,6 +51,3 @@ class EvaluationService:
         )
 
         return evaluation_response
-
-
-evaluation_service = EvaluationService()
