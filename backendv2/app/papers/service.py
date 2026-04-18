@@ -8,7 +8,7 @@ from app.core.model import UserType
 from app.papers.model import QuestionPaper, PaperQuestions
 from app.questions.model import Question
 from app.auth.model import Association
-from app.auth.schemas import TokenPayload
+from app.auth.schemas import Token
 from app.papers.schemas import (
     QuestionPaperCreate,
     QuestionPaperUpdate,
@@ -19,7 +19,7 @@ from app.papers.schemas import (
 class PaperService:
     @staticmethod
     async def create_paper(
-        paper_in: QuestionPaperCreate, current_teacher: TokenPayload, db: AsyncSession
+        paper_in: QuestionPaperCreate, current_teacher: Token, db: AsyncSession
     ) -> QuestionPaper:
         db_paper = QuestionPaper(t_email=current_teacher.email, **paper_in.model_dump())
         db.add(db_paper)
@@ -29,7 +29,7 @@ class PaperService:
 
     @staticmethod
     async def get_papers(
-        skip: int, limit: int, current_token: TokenPayload, db: AsyncSession
+        skip: int, limit: int, current_token: Token, db: AsyncSession
     ) -> Sequence[QuestionPaper]:
         query = (
             select(QuestionPaper)
@@ -43,7 +43,7 @@ class PaperService:
 
     @staticmethod
     async def get_paper(
-        qpid: int, current_token: TokenPayload, db: AsyncSession
+        qpid: int, current_token: Token, db: AsyncSession
     ) -> QuestionPaper:
         query = select(QuestionPaper).where(QuestionPaper.qpid == qpid)
         result = await db.execute(query)
@@ -88,7 +88,7 @@ class PaperService:
 
     @staticmethod
     async def get_paper_questions(
-        qpid: int, current_token: TokenPayload, db: AsyncSession
+        qpid: int, current_token: Token, db: AsyncSession
     ) -> Sequence[PaperQuestions]:
         # Validate paper exists and is accessible
         await PaperService.get_paper(qpid, current_token, db)
@@ -106,7 +106,7 @@ class PaperService:
     async def update_paper(
         qpid: int,
         paper_in: QuestionPaperUpdate,
-        current_teacher: TokenPayload,
+        current_teacher: Token,
         db: AsyncSession,
     ) -> QuestionPaper:
         query = select(QuestionPaper).where(
@@ -130,7 +130,7 @@ class PaperService:
     async def assign_question_to_paper(
         qpid: int,
         mapping_in: PaperQuestionCreate,
-        current_teacher: TokenPayload,
+        current_teacher: Token,
         db: AsyncSession,
     ) -> PaperQuestions:
         paper_query = select(QuestionPaper).where(

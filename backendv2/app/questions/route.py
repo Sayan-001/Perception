@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.auth.dependencies import get_current_teacher
-from app.auth.schemas import TokenPayload
+from app.auth.schemas import Token
 from app.questions.model import Question
 from app.questions.schemas import QuestionCreate, QuestionTeacherOut
 
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/questions", tags=["questions"])
 async def create_question(
     question_in: QuestionCreate,
     db: AsyncSession = Depends(get_db),
-    current_teacher: TokenPayload = Depends(get_current_teacher),
+    current_teacher: Token = Depends(get_current_teacher),
 ):
     """
     Create a new standalone question in the question bank. Limited to teachers.

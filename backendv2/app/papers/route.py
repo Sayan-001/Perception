@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Union
 
 from app.database import get_db
-from app.auth.dependencies import get_current_teacher, get_current_token_payload
-from app.auth.schemas import TokenPayload
+from app.auth.dependencies import get_current_teacher, get_token_data
+from app.auth.schemas import Token
 from app.core.model import UserType
 from app.papers.service import PaperService
 from app.papers.schemas import (
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/papers", tags=["papers"])
 async def create_paper(
     paper_in: QuestionPaperCreate,
     db: AsyncSession = Depends(get_db),
-    current_teacher: TokenPayload = Depends(get_current_teacher),
+    current_teacher: Token = Depends(get_current_teacher),
 ):
     """
     Create a new question paper. Limited to teachers.
@@ -37,7 +37,7 @@ async def list_papers(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_token: TokenPayload = Depends(get_current_token_payload),
+    current_token: Token = Depends(get_token_data),
 ):
     """
     Retrieve all question papers created by the current user.
@@ -49,7 +49,7 @@ async def list_papers(
 async def get_paper(
     qpid: int,
     db: AsyncSession = Depends(get_db),
-    current_token: TokenPayload = Depends(get_current_token_payload),
+    current_token: Token = Depends(get_token_data),
 ):
     """
     Retrieve a specific question paper by ID.
@@ -65,7 +65,7 @@ async def get_paper(
 async def get_paper_questions(
     qpid: int,
     db: AsyncSession = Depends(get_db),
-    current_token: TokenPayload = Depends(get_current_token_payload),
+    current_token: Token = Depends(get_token_data),
 ):
     """
     Retrieve all questions assigned to a specific paper. Returns different view models
@@ -84,7 +84,7 @@ async def update_paper(
     qpid: int,
     paper_in: QuestionPaperUpdate,
     db: AsyncSession = Depends(get_db),
-    current_teacher: TokenPayload = Depends(get_current_teacher),
+    current_teacher: Token = Depends(get_current_teacher),
 ):
     """
     Update a question paper. Limited to teachers.
@@ -101,7 +101,7 @@ async def assign_question_to_paper(
     qpid: int,
     mapping_in: PaperQuestionCreate,
     db: AsyncSession = Depends(get_db),
-    current_teacher: TokenPayload = Depends(get_current_teacher),
+    current_teacher: Token = Depends(get_current_teacher),
 ):
     """
     Map an existing question to a paper with marks and sort order.

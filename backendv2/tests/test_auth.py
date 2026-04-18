@@ -137,7 +137,6 @@ async def test_login_success(unique_email, test_password):
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
-        assert data["token_type"] == "bearer"
 
 
 @pytest.mark.asyncio(loop_scope="session")

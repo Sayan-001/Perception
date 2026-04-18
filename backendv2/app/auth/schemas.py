@@ -1,14 +1,8 @@
-from pydantic import BaseModel, EmailStr
-
 from app.core.model import UserType
+from pydantic import BaseModel, EmailStr
 
 
 class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenPayload(BaseModel):
     email: str
     role: str
 

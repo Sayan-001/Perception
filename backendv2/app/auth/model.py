@@ -1,13 +1,12 @@
 from datetime import date
 
+from app.config import settings
+from app.core.model import UserType
+from app.database import Base
 from sqlalchemy import Boolean, Column, Date, DateTime
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.sql import func
-
-from app.config import settings
-from app.database import Base
-from app.core.model import UserType
 
 
 class AppUser(Base):

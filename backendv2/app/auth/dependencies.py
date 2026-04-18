@@ -1,24 +1,24 @@
 import jwt
+from app.auth.model import AppUser
+from app.auth.schemas import Token
+from app.config import settings
+from app.core.model import UserType
+from app.database import get_db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
-from app.database import get_db
-from app.auth.model import AppUser
-from app.auth.schemas import TokenPayload
-
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_STR}/auth/login")
 
 
-async def get_current_token_payload(
+async def get_token_data(
     token: str = Depends(reusable_oauth2),
-) -> TokenPayload:
+) -> Token:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        token_data = TokenPayload(**payload)
+        token_data = Token(**payload)
         if token_data.email is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -34,7 +34,7 @@ async def get_current_token_payload(
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
-    token_data: TokenPayload = Depends(get_current_token_payload),
+    token_data: Token = Depends(get_token_data),
 ) -> AppUser:
     result = await db.execute(select(AppUser).filter(AppUser.email == token_data.email))
     user = result.scalars().first()
@@ -53,9 +53,9 @@ async def get_current_user(
 
 
 async def get_current_teacher(
-    token_data: TokenPayload = Depends(get_current_token_payload),
-) -> TokenPayload:
-    if token_data.role != "teacher":
+    token_data: Token = Depends(get_token_data),
+) -> Token:
+    if token_data.role != UserType.teacher.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Teacher privileges required",

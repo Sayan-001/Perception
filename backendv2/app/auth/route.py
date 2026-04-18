@@ -1,12 +1,11 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
+from app.auth.schemas import UserCreate, UserLogin, UserOut
+from app.auth.service import AuthService
+from app.database import get_db
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database import get_db
-from app.auth.schemas import Token, UserCreate, UserLogin, UserOut
-from app.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -22,7 +21,7 @@ async def signup(user_in: UserCreate, db: Annotated[AsyncSession, Depends(get_db
     return await AuthService.create_user(db, user_in)
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login(
     user_in: UserLogin,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -39,11 +38,11 @@ async def login(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
 
-    user.last_login_at = datetime.now(timezone.utc)
+    setattr(user, "last_login_at", datetime.now(timezone.utc))
     await db.commit()
 
     access_token = AuthService.create_access_token(
-        subject=user.email,
+        email=user.email,
         role=(
             user.user_type.value
             if hasattr(user.user_type, "value")
@@ -51,4 +50,4 @@ async def login(
         ),
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token}
