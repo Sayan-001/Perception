@@ -9,7 +9,7 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: str
+    email: str
     role: str
 
 

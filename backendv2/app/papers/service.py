@@ -21,7 +21,7 @@ class PaperService:
     async def create_paper(
         paper_in: QuestionPaperCreate, current_teacher: TokenPayload, db: AsyncSession
     ) -> QuestionPaper:
-        db_paper = QuestionPaper(t_email=current_teacher.sub, **paper_in.model_dump())
+        db_paper = QuestionPaper(t_email=current_teacher.email, **paper_in.model_dump())
         db.add(db_paper)
         await db.commit()
         await db.refresh(db_paper)
@@ -33,7 +33,7 @@ class PaperService:
     ) -> Sequence[QuestionPaper]:
         query = (
             select(QuestionPaper)
-            .where(QuestionPaper.t_email == current_token.sub)
+            .where(QuestionPaper.t_email == current_token.email)
             .order_by(QuestionPaper.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -66,7 +66,7 @@ class PaperService:
             # Student must be associated with the teacher who created the paper
             association_query = select(Association).where(
                 Association.t_email == paper.t_email,
-                Association.s_email == current_token.sub,
+                Association.s_email == current_token.email,
             )
             association_result = await db.execute(association_query)
             if not association_result.scalars().first():
@@ -77,7 +77,7 @@ class PaperService:
 
         # Handle teacher access
         if (current_token.role == UserType.teacher.value) and (
-            paper.t_email != current_token.sub
+            paper.t_email != current_token.email
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -110,7 +110,7 @@ class PaperService:
         db: AsyncSession,
     ) -> QuestionPaper:
         query = select(QuestionPaper).where(
-            QuestionPaper.qpid == qpid, QuestionPaper.t_email == current_teacher.sub
+            QuestionPaper.qpid == qpid, QuestionPaper.t_email == current_teacher.email
         )
         result = await db.execute(query)
         db_paper = result.scalars().first()
@@ -134,7 +134,7 @@ class PaperService:
         db: AsyncSession,
     ) -> PaperQuestions:
         paper_query = select(QuestionPaper).where(
-            QuestionPaper.qpid == qpid, QuestionPaper.t_email == current_teacher.sub
+            QuestionPaper.qpid == qpid, QuestionPaper.t_email == current_teacher.email
         )
         paper_res = await db.execute(paper_query)
         if not paper_res.scalars().first():

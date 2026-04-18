@@ -30,7 +30,7 @@ class AuthService:
         expires_delta: int = settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     ) -> str:
         expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
-        to_encode = {"exp": expire, "sub": str(subject), "role": role}
+        to_encode = {"exp": expire, "email": str(subject), "role": role}
         encoded_jwt = jwt.encode(
             to_encode, settings.SECRET_KEY, algorithm=cls.ALGORITHM
         )

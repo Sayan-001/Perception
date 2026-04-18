@@ -19,7 +19,7 @@ async def get_current_token_payload(
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         token_data = TokenPayload(**payload)
-        if token_data.sub is None:
+        if token_data.email is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Could not validate credentials",
@@ -36,7 +36,7 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token_data: TokenPayload = Depends(get_current_token_payload),
 ) -> AppUser:
-    result = await db.execute(select(AppUser).filter(AppUser.email == token_data.sub))
+    result = await db.execute(select(AppUser).filter(AppUser.email == token_data.email))
     user = result.scalars().first()
 
     if not user:
