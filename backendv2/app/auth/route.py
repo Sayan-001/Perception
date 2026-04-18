@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.schemas.auth import Token, UserCreate, UserLogin, UserOut
-from app.services.auth_service import AuthService
+from app.auth.schemas import Token, UserCreate, UserLogin, UserOut
+from app.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -42,6 +42,13 @@ async def login(
     user.last_login_at = datetime.now(timezone.utc)
     await db.commit()
 
-    access_token = AuthService.create_access_token(subject=user.email)
+    access_token = AuthService.create_access_token(
+        subject=user.email,
+        role=(
+            user.user_type.value
+            if hasattr(user.user_type, "value")
+            else str(user.user_type)
+        ),
+    )
 
     return {"access_token": access_token, "token_type": "bearer"}

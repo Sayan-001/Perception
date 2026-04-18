@@ -6,7 +6,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
 from app.database import Base
-from app.models.enums import EvaluationStatus
+from app.core.model import EvaluationStatus
 
 
 class Submission(Base):

@@ -1,7 +1,7 @@
 from groq import AsyncGroq
 
 from app.config import settings
-from app.schemas.evaluation import EvaluationResponse
+from app.evaluations.schemas import EvaluationResponse
 
 SYSTEM_PROMPT = """
 ### Instructions:

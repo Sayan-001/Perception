@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import jwt
 from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.user import AppUser, UserUsage
-from app.schemas.auth import UserCreate
+from app.auth.model import AppUser, UserUsage
+from app.auth.schemas import UserCreate
 
 
 class AuthService:
@@ -24,10 +24,13 @@ class AuthService:
 
     @classmethod
     def create_access_token(
-        cls, subject: str, expires_delta: int = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        cls,
+        subject: str,
+        role: str,
+        expires_delta: int = settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     ) -> str:
         expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
-        to_encode = {"exp": expire, "sub": str(subject)}
+        to_encode = {"exp": expire, "sub": str(subject), "role": role}
         encoded_jwt = jwt.encode(
             to_encode, settings.SECRET_KEY, algorithm=cls.ALGORITHM
         )

@@ -5,7 +5,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.database import AsyncSessionLocal
-from app.models.user import AppUser
+from app.auth.model import AppUser
 from main import app
 
 

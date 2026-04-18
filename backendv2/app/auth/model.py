@@ -7,7 +7,7 @@ from sqlalchemy.sql import func
 
 from app.config import settings
 from app.database import Base
-from app.models.enums import UserType
+from app.core.model import UserType
 
 
 class AppUser(Base):

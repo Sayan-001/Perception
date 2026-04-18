@@ -2,8 +2,8 @@ import time
 
 import pytest
 
-from app.schemas.evaluation import EvaluationResponse
-from app.services.evaluation_service import EvaluationService
+from app.evaluations.schemas import EvaluationResponse
+from app.evaluations.service import EvaluationService
 from app.utils.logging import logger
 
 

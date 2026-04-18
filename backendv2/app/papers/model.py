@@ -1,7 +1,14 @@
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer,
-                        Numeric, String, Text)
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+)
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -24,19 +31,8 @@ class QuestionPaper(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-
-class Question(Base):
-    __tablename__ = "questions"
-
-    qid = Column(Integer, primary_key=True, autoincrement=True)
-    tags = Column(JSONB)
-    question_text = Column(Text, nullable=False)
-    model_answer = Column(Text)
-    rubric = Column(Text, nullable=False)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    paper_questions = relationship(
+        "PaperQuestions", back_populates="paper", cascade="all, delete-orphan"
     )
 
 
@@ -53,3 +49,6 @@ class PaperQuestions(Base):
     )
     sort_order = Column(Integer, nullable=False)
     marks_assigned = Column(Numeric(10, 2), nullable=False)
+
+    paper = relationship("QuestionPaper", back_populates="paper_questions")
+    question = relationship("Question", back_populates="paper_questions")

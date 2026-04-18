@@ -6,7 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine
 
-from app.routes.auth import router as auth_router
+from app.auth.route import router as auth_router
+from app.papers.route import router as papers_router
+from app.questions.route import router as questions_router
 
 
 @asynccontextmanager
@@ -16,7 +18,11 @@ async def lifespan(app: FastAPI):
     # For now, let's auto-create tables if they don't exist.
     async with engine.begin() as conn:
         # Import models so SQLAlchemy knows about them
-        from app.models import __all__
+        import app.core.model
+        import app.auth.model
+        import app.papers.model
+        import app.questions.model
+        import app.submissions.model
 
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -40,6 +46,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(papers_router)
+app.include_router(questions_router)
 
 
 @app.get("/health")

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from app.models.enums import UserType
+
+from app.core.model import UserType
 
 
 class Token(BaseModel):
@@ -8,7 +9,8 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: str | None = None
+    sub: str
+    role: str
 
 
 class UserCreate(BaseModel):
