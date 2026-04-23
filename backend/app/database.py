@@ -1,29 +1,32 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
+                                    create_async_engine)
+from sqlalchemy.orm import declarative_base
 
-from app.utils.vars import MONGODB_URI
+from app.config import settings
+
+db_url = settings.DATABASE_URL
+if "sslmode=" in db_url:
+    db_url = db_url.replace("sslmode=", "ssl=")
+
+engine = create_async_engine(
+    db_url,
+    echo=True if settings.ENVIRONMENT == "development" else False,
+    pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+Base = declarative_base()
 
 
-class Database:
-    client: AsyncIOMotorClient | None = None
-    
-    def get_db(self):
-        if not self.client:
-            self.client = AsyncIOMotorClient(MONGODB_URI)
-        return self.client.core
-
-db = Database()
-association = db.get_db().association
-question_papers = db.get_db().question_papers
-types = db.get_db().types
-
-async def init_db() -> bool:
-    """Initialize the database connection."""
-    
-    try:
-        await db.get_db().command('ping')
-        print("Successfully connected to MongoDB!")
-        return True
-    
-    except Exception as e:
-        print(f"Failed to initialize database: {str(e)}")
-        return False
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session

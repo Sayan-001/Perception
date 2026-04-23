@@ -1,40 +1,56 @@
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from firebase_admin import credentials, initialize_app
 
-from app.database import init_db
-from app.routes import association, evaluation, papers, types
-from app.utils.vars import ENVIRONMENT
+from app.config import settings
+from app.database import Base, engine
+
+from app.auth.route import router as auth_router
+from app.papers.route import router as papers_router
+from app.submissions.route import router as submissions_router
+from app.evaluations.route import router as evaluations_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await init_db()
+    # This runs when the app starts
+    # Note: In production you'd use Alembic.
+    # For now, let's auto-create tables if they don't exist.
+    async with engine.begin() as conn:
+        # Import models so SQLAlchemy knows about them
+        import app.core.model
+        import app.auth.model
+        import app.papers.model
+        import app.submissions.model
+
+        await conn.run_sync(Base.metadata.create_all)
     yield
+    # This runs when the app shuts down
+    await engine.dispose()
+
 
 app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
     lifespan=lifespan,
-    title="Perception Backend API",
-    openapi_url="/openapi.json" if ENVIRONMENT == "development" else None,
-    docs_url="/docs" if ENVIRONMENT == "development" else None,
-    redoc_url=None
 )
 
-cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), "admin-cred.json"))
-initialize_app(cred)
-
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # Update this to your frontend URL in production
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(types.router)
-app.include_router(association.router)
-app.include_router(papers.router)
-app.include_router(evaluation.router)
+app.include_router(auth_router)
+app.include_router(papers_router)
+app.include_router(submissions_router)
+app.include_router(evaluations_router)
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "version": settings.VERSION}
