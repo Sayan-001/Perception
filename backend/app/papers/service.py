@@ -173,3 +173,20 @@ class PaperService:
             .where(QuestionPaper.qpid == db_paper.qpid)
         )
         return result.scalars().first()
+
+    @staticmethod
+    async def delete_paper(qpid: int, current_teacher: Token, db: AsyncSession) -> None:
+        query = select(QuestionPaper).where(
+            QuestionPaper.qpid == qpid,
+            QuestionPaper.t_email == current_teacher.email,
+        )
+        result = await db.execute(query)
+        db_paper = result.scalars().first()
+
+        if not db_paper:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Question paper not found"
+            )
+
+        await db.delete(db_paper)
+        await db.commit()

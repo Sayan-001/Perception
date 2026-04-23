@@ -70,7 +70,7 @@ class SubmissionService:
 
         await db.commit()
         await db.refresh(submission)
-        
+
         # Attach answers for returning
         submission.answers = final_answers
 
@@ -85,11 +85,11 @@ class SubmissionService:
         db: AsyncSession,
     ) -> List[Submission]:
         stmt = select(Submission).where(Submission.qpid == qpid)
-        
+
         # If student, only show their own submissions
         if current_user.role == UserType.student.value:
             stmt = stmt.where(Submission.s_email == current_user.email)
-            
+
         stmt = stmt.offset(skip).limit(limit)
         res = await db.execute(stmt)
         return list(res.scalars().all())
@@ -101,7 +101,10 @@ class SubmissionService:
         current_user: Token,
         db: AsyncSession,
     ) -> Submission:
-        if current_user.role == UserType.student.value and current_user.email != s_email:
+        if (
+            current_user.role == UserType.student.value
+            and current_user.email != s_email
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not authorized to access this submission.",
@@ -126,3 +129,44 @@ class SubmissionService:
         submission.answers = list(answers_res.scalars().all())
 
         return submission
+
+    @staticmethod
+    async def delete_submission(
+        qpid: int,
+        s_email: str,
+        current_user: Token,
+        db: AsyncSession,
+    ) -> None:
+        if (
+            current_user.role == UserType.student.value
+            and current_user.email != s_email
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete this submission.",
+            )
+
+        stmt = select(Submission).where(
+            Submission.qpid == qpid, Submission.s_email == s_email
+        )
+        res = await db.execute(stmt)
+        submission = res.scalar_one_or_none()
+
+        if not submission:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Submission not found.",
+            )
+
+        if current_user.role == UserType.teacher.value:
+            stmt_paper = select(QuestionPaper).where(QuestionPaper.qpid == qpid)
+            paper_res = await db.execute(stmt_paper)
+            paper = paper_res.scalar_one_or_none()
+            if not paper or paper.t_email != current_user.email:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not authorized to delete this submission.",
+                )
+
+        await db.delete(submission)
+        await db.commit()

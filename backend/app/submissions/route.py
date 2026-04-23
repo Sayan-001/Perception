@@ -84,3 +84,17 @@ async def get_submission(
         return SubmissionDetailTeacherOut.model_validate(submission)
     else:
         return SubmissionDetailStudentOut.model_validate(submission)
+
+
+@router.delete("/{qpid}/{s_email}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_submission(
+    qpid: int,
+    s_email: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Token = Depends(get_token_data),
+):
+    """
+    Delete a specific submission.
+    Students can delete their own. Teachers can delete any submission on their question paper.
+    """
+    await SubmissionService.delete_submission(qpid, s_email, current_user, db)

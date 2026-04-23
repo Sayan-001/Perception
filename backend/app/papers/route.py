@@ -79,3 +79,15 @@ async def update_paper(
     """
     paper = await PaperService.update_paper(qpid, paper_in, current_teacher, db)
     return QuestionPaperTeacherOut.model_validate(paper)
+
+
+@router.delete("/{qpid}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_paper(
+    qpid: int,
+    db: AsyncSession = Depends(get_db),
+    current_teacher: Token = Depends(get_current_teacher),
+):
+    """
+    Delete a question paper entirely. Limited to teachers.
+    """
+    await PaperService.delete_paper(qpid, current_teacher, db)

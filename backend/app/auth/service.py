@@ -67,3 +67,15 @@ class AuthService:
         if not cls.verify_password(password, user.password_hash):
             return None
         return user
+
+    @staticmethod
+    async def delete_user(db: AsyncSession, email: str) -> None:
+        from fastapi import HTTPException, status
+
+        user = await AuthService.get_user_by_email(db, email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+        await db.delete(user)
+        await db.commit()

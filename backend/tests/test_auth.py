@@ -129,8 +129,8 @@ async def test_login_success(unique_email, test_password):
         )
         response = await ac.post(
             "/auth/login",
-            json={
-                "email": unique_email,
+            data={
+                "username": unique_email,
                 "password": test_password,
             },
         )
@@ -155,8 +155,8 @@ async def test_login_incorrect_password(unique_email, test_password):
         )
         response = await ac.post(
             "/auth/login",
-            json={
-                "email": unique_email,
+            data={
+                "username": unique_email,
                 "password": "wrong_password",
             },
         )
@@ -171,8 +171,8 @@ async def test_login_nonexistent_email(test_password):
     ) as ac:
         response = await ac.post(
             "/auth/login",
-            json={
-                "email": f"missing_{uuid.uuid4()}@example.com",
+            data={
+                "username": f"missing_{uuid.uuid4()}@example.com",
                 "password": test_password,
             },
         )
@@ -187,12 +187,13 @@ async def test_login_invalid_email_format(test_password):
     ) as ac:
         response = await ac.post(
             "/auth/login",
-            json={
-                "email": "just-a-random-string",
+            data={
+                "username": "just-a-random-string",
                 "password": test_password,
             },
         )
-        assert response.status_code == 422
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Incorrect email or password"
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -202,8 +203,8 @@ async def test_login_missing_fields(unique_email):
     ) as ac:
         response = await ac.post(
             "/auth/login",
-            json={
-                "email": unique_email,
+            data={
+                "username": unique_email,
             },
         )
         assert response.status_code == 422
