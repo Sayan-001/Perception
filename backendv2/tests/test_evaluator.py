@@ -2,8 +2,7 @@ import time
 
 import pytest
 
-from app.evaluations.schemas import EvaluationResponse
-from app.evaluations.service import EvaluationService
+from app.utils.evaluator import EvaluationService, EvaluationResponse
 from app.utils.logging import logger
 
 
@@ -19,8 +18,9 @@ async def test_evaluate_real_request():
 
     result = await EvaluationService.evaluate(
         question=question,
-        teacher_answer=teacher_answer,
         student_answer=student_answer,
+        max_marks=10.0,
+        teacher_answer=teacher_answer,
         rubric=rubric,
     )
 
@@ -44,8 +44,9 @@ async def test_evaluate_real_request_poor_answer():
     start_time = time.time()
     result = await EvaluationService.evaluate(
         question="Explain the theory of relativity.",
-        teacher_answer="E=mc^2 and the laws of physics are the same for all non-accelerating observers.",
         student_answer="I don't know, an apple fell on his head?",
+        max_marks=10.0,
+        teacher_answer="E=mc^2 and the laws of physics are the same for all non-accelerating observers.",
         rubric="Provide structural feedback and score strictly.",
     )
     latency = time.time() - start_time

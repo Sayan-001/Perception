@@ -1,13 +1,14 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from app.auth.schemas import UserCreate, UserLogin, UserOut
+from app.auth.schemas import UserCreate, UserOut
 from app.auth.service import AuthService
 from app.database import get_db
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 @router.post("/signup", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -23,10 +24,12 @@ async def signup(user_in: UserCreate, db: Annotated[AsyncSession, Depends(get_db
 
 @router.post("/login")
 async def login(
-    user_in: UserLogin,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    user = await AuthService.authenticate_user(db, user_in.email, user_in.password)
+    user = await AuthService.authenticate_user(
+        db, form_data.username, form_data.password
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

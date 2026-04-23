@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Perception Backend"
     VERSION: str = "1.0.0"
-    API_STR: str = "/api/v2"
+    API_STR: str = "/api"
 
     # Security
     SECRET_KEY: str

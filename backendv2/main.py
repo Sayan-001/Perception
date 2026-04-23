@@ -8,7 +8,8 @@ from app.database import Base, engine
 
 from app.auth.route import router as auth_router
 from app.papers.route import router as papers_router
-from app.questions.route import router as questions_router
+from app.submissions.route import router as submissions_router
+from app.evaluations.route import router as evaluations_router
 
 
 @asynccontextmanager
@@ -21,7 +22,6 @@ async def lifespan(app: FastAPI):
         import app.core.model
         import app.auth.model
         import app.papers.model
-        import app.questions.model
         import app.submissions.model
 
         await conn.run_sync(Base.metadata.create_all)
@@ -47,7 +47,8 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(papers_router)
-app.include_router(questions_router)
+app.include_router(submissions_router)
+app.include_router(evaluations_router)
 
 
 @app.get("/health")

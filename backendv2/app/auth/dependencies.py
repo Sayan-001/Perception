@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"{settings.API_STR}/auth/login")
+reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 async def get_token_data(

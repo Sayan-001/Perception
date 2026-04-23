@@ -1,103 +1,88 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-"""
-Models for QuestionPaper:
-- QuestionPaperCreate: For creating a new question paper.
-- QuestionPaperUpdate: For updating an existing question paper.
-- QuestionPaperOut: For returning question paper details to teachers (includes all fields).
-- QuestionPaperStudentOut: For returning question paper details to students (excludes certain fields).
-"""
+
+class QuestionCreate(BaseModel):
+    question_text: str
+    model_answer: str | None = None
+    rubric: str | None = None
+    marks_assigned: Decimal
+    sort_order: int = 0
+
+
+class QuestionUpdate(BaseModel):
+    qid: int | None = None
+    question_text: str | None = None
+    model_answer: str | None = None
+    rubric: str | None = None
+    marks_assigned: Decimal | None = None
+    sort_order: int | None = None
+
+
+# Question Base & Derived Schemas
+class QuestionBase(BaseModel):
+    qid: int
+    qpid: int
+    question_text: str
+    marks_assigned: Decimal
+    sort_order: int
+
+    model_config = {"from_attributes": True}
+
+
+class QuestionTeacherOut(QuestionBase):
+    model_answer: str | None = None
+    rubric: str | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class QuestionStudentOut(QuestionBase):
+    pass
 
 
 class QuestionPaperCreate(BaseModel):
     title: str
     start_date: datetime
-    duration_minutes: Optional[int] = None
-    total_marks: Decimal
+    duration_minutes: int | None = None
     is_published: bool = False
+    questions: list[QuestionCreate] = Field(default_factory=list)
 
 
 class QuestionPaperUpdate(BaseModel):
-    title: Optional[str] = None
-    start_date: Optional[datetime] = None
-    duration_minutes: Optional[int] = None
-    total_marks: Optional[Decimal] = None
-    is_published: Optional[bool] = None
+    title: str | None = None
+    start_date: datetime | None = None
+    duration_minutes: int | None = None
+    is_published: bool | None = None
+    questions: list[QuestionUpdate] | None = None
 
 
-class QuestionPaperOut(BaseModel):
+# Paper Base & Derived Schemas
+class QuestionPaperBase(BaseModel):
     qpid: int
     t_email: str
     title: str
     start_date: datetime
-    duration_minutes: Optional[int] = None
+    duration_minutes: int | None = None
     total_marks: Decimal
     is_published: bool
+
+    model_config = {"from_attributes": True}
+
+
+class QuestionPaperTeacherOut(QuestionPaperBase):
     created_at: datetime
-    updated_at: Optional[datetime] = None
-    model_config = {"from_attributes": True}
+    updated_at: datetime | None = None
+    questions: list[QuestionTeacherOut] = Field(default_factory=list)
 
 
-class QuestionPaperStudentOut(BaseModel):
-    qpid: int
-    t_email: str
-    title: str
-    start_date: datetime
-    duration_minutes: Optional[int] = None
-    total_marks: Decimal
-    model_config = {"from_attributes": True}
+class QuestionPaperStudentOut(QuestionPaperBase):
+    questions: list[QuestionStudentOut] = Field(default_factory=list)
 
 
-"""
-Models for PaperToQuestion association:
-- PaperQuestionCreate: For adding a question to a paper.
-- PaperQuestionUpdate: For updating the association.
-- PaperQuestionOut: For returning the association details (used internally).
-- PaperQuestionDetailOut: Teacher view of the question mapping.
-- PaperQuestionStudentOut: Student view of the question mapping.
-"""
-
-
-class PaperQuestionCreate(BaseModel):
-    qpid: int
-    qid: int
-    sort_order: int
-    marks_assigned: Decimal
-
-
-class PaperQuestionUpdate(BaseModel):
-    sort_order: Optional[int] = None
-    marks_assigned: Optional[Decimal] = None
-
-
-class PaperQuestionOut(BaseModel):
-    qpid: int
-    qid: int
-    sort_order: int
-    marks_assigned: Decimal
-    model_config = {"from_attributes": True}
-
-
-from app.questions.schemas import QuestionTeacherOut, QuestionStudentOut
-
-
-class PaperQuestionDetailOut(BaseModel):
-    qpid: int
-    qid: int
-    sort_order: int
-    marks_assigned: Decimal
-    question: QuestionTeacherOut
-    model_config = {"from_attributes": True}
-
-
-class PaperQuestionStudentOut(BaseModel):
-    qpid: int
-    qid: int
-    sort_order: int
-    marks_assigned: Decimal
-    question: QuestionStudentOut
-    model_config = {"from_attributes": True}
+# Minimal Base List Output
+class QuestionPaperOut(QuestionPaperBase):
+    created_at: datetime
+    updated_at: datetime | None = None

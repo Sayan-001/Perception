@@ -29,7 +29,7 @@ def test_password():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_signup_success(unique_email, test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         response = await ac.post(
             "/auth/signup",
@@ -50,7 +50,7 @@ async def test_signup_success(unique_email, test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_signup_duplicate_email(unique_email, test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         payload = {
             "email": unique_email,
@@ -67,7 +67,7 @@ async def test_signup_duplicate_email(unique_email, test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_signup_invalid_email(test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         response = await ac.post(
             "/auth/signup",
@@ -84,7 +84,7 @@ async def test_signup_invalid_email(test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_signup_missing_fields(unique_email, test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         response = await ac.post(
             "/auth/signup",
@@ -99,7 +99,7 @@ async def test_signup_missing_fields(unique_email, test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_signup_invalid_user_type(unique_email, test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         response = await ac.post(
             "/auth/signup",
@@ -116,7 +116,7 @@ async def test_signup_invalid_user_type(unique_email, test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_login_success(unique_email, test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         await ac.post(
             "/auth/signup",
@@ -142,7 +142,7 @@ async def test_login_success(unique_email, test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_login_incorrect_password(unique_email, test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         await ac.post(
             "/auth/signup",
@@ -167,7 +167,7 @@ async def test_login_incorrect_password(unique_email, test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_login_nonexistent_email(test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         response = await ac.post(
             "/auth/login",
@@ -183,7 +183,7 @@ async def test_login_nonexistent_email(test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_login_invalid_email_format(test_password):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         response = await ac.post(
             "/auth/login",
@@ -198,7 +198,7 @@ async def test_login_invalid_email_format(test_password):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_login_missing_fields(unique_email):
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test/api"
     ) as ac:
         response = await ac.post(
             "/auth/login",

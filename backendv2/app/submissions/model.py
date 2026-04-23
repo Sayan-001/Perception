@@ -1,8 +1,11 @@
-from sqlalchemy import Boolean, Column, DateTime
+from datetime import datetime
+from typing import Optional
+from decimal import Decimal
+
+from sqlalchemy import Boolean, DateTime
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import (ForeignKey, ForeignKeyConstraint, Integer, Numeric,
-                        String, Text)
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, Integer, Numeric, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -12,19 +15,22 @@ from app.core.model import EvaluationStatus
 class Submission(Base):
     __tablename__ = "submissions"
 
-    qpid = Column(
+    qpid: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("question_papers.qpid", ondelete="CASCADE"),
         primary_key=True,
     )
-    s_email = Column(
+    s_email: Mapped[str] = mapped_column(
         String, ForeignKey("app_users.email", ondelete="CASCADE"), primary_key=True
     )
-    evaluated = Column(Boolean, default=False)
-    total_marks_obtained = Column(Numeric(10, 2), default=0.0)
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
+    evaluated: Mapped[bool] = mapped_column(Boolean, default=False)
+    total_marks_obtained: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0.0)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
@@ -32,18 +38,21 @@ class Submission(Base):
 class Answer(Base):
     __tablename__ = "answers"
 
-    qpid = Column(Integer, primary_key=True)
-    s_email = Column(String, primary_key=True)
-    qid = Column(Integer, primary_key=True)
+    qpid: Mapped[int] = mapped_column(Integer, primary_key=True)
+    s_email: Mapped[str] = mapped_column(String, primary_key=True)
+    qid: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    student_answer = Column(Text)
-    marks_obtained = Column(Numeric(10, 2), default=0.0)
-    feedback = Column(Text)
-    raw_llm_data = Column(JSONB)
-    status = Column(SQLEnum(EvaluationStatus), default=EvaluationStatus.pending)
+    student_answer: Mapped[Optional[str]] = mapped_column(Text)
+    marks_obtained: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0.0)
+    feedback: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[EvaluationStatus] = mapped_column(
+        SQLEnum(EvaluationStatus), default=EvaluationStatus.pending
+    )
 
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 

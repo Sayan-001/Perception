@@ -1,14 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class EvaluationResponse(BaseModel):
-    score: float = Field(
-        ge=0.0,
-        le=10.0,
-        default=0.0,
-        description="The score awarded out of 10 based on the rubric.",
-    )
-    feedback: str = Field(
-        default="",
-        description="Feedback to the student highlighting mistakes, without providing the correct answer.",
-    )
+# Utilizing the schemas from app.submissions.schemas for response.
+# Additional evaluation specific schemas can be added here if needed.
+class EvaluationMessageOut(BaseModel):
+    message: str

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Sequence
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -5,14 +6,12 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.model import UserType
-from app.papers.model import QuestionPaper, PaperQuestions
-from app.questions.model import Question
+from app.papers.model import QuestionPaper, Question
 from app.auth.model import Association
 from app.auth.schemas import Token
 from app.papers.schemas import (
     QuestionPaperCreate,
     QuestionPaperUpdate,
-    PaperQuestionCreate,
 )
 
 
@@ -21,11 +20,29 @@ class PaperService:
     async def create_paper(
         paper_in: QuestionPaperCreate, current_teacher: Token, db: AsyncSession
     ) -> QuestionPaper:
-        db_paper = QuestionPaper(t_email=current_teacher.email, **paper_in.model_dump())
+        paper_data = paper_in.model_dump(exclude={"questions"})
+        total_marks = sum(
+            (q.marks_assigned for q in paper_in.questions), start=Decimal("0")
+        )
+        db_paper = QuestionPaper(
+            t_email=current_teacher.email, **paper_data, total_marks=total_marks
+        )
+
+        # Add questions
+        for q_in in paper_in.questions:
+            db_paper.questions.append(Question(**q_in.model_dump()))
+
         db.add(db_paper)
         await db.commit()
         await db.refresh(db_paper)
-        return db_paper
+
+        # Reload to get questions relationship populated if not fully there
+        result = await db.execute(
+            select(QuestionPaper)
+            .options(selectinload(QuestionPaper.questions))
+            .where(QuestionPaper.qpid == db_paper.qpid)
+        )
+        return result.scalars().first()
 
     @staticmethod
     async def get_papers(
@@ -45,7 +62,11 @@ class PaperService:
     async def get_paper(
         qpid: int, current_token: Token, db: AsyncSession
     ) -> QuestionPaper:
-        query = select(QuestionPaper).where(QuestionPaper.qpid == qpid)
+        query = (
+            select(QuestionPaper)
+            .options(selectinload(QuestionPaper.questions))
+            .where(QuestionPaper.qpid == qpid)
+        )
         result = await db.execute(query)
         paper = result.scalars().first()
 
@@ -56,14 +77,12 @@ class PaperService:
 
         # Handle student access
         if current_token.role == UserType.student.value:
-            # Paper must be published
             if paper.is_published is False:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Paper not yet available",
                 )
 
-            # Student must be associated with the teacher who created the paper
             association_query = select(Association).where(
                 Association.t_email == paper.t_email,
                 Association.s_email == current_token.email,
@@ -76,8 +95,9 @@ class PaperService:
                 )
 
         # Handle teacher access
+        paper_owner_email = str(getattr(paper, "t_email"))
         if (current_token.role == UserType.teacher.value) and (
-            paper.t_email != current_token.email
+            paper_owner_email != current_token.email
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -87,71 +107,69 @@ class PaperService:
         return paper
 
     @staticmethod
-    async def get_paper_questions(
-        qpid: int, current_token: Token, db: AsyncSession
-    ) -> Sequence[PaperQuestions]:
-        # Validate paper exists and is accessible
-        await PaperService.get_paper(qpid, current_token, db)
-
-        query = (
-            select(PaperQuestions)
-            .where(PaperQuestions.qpid == qpid)
-            .options(selectinload(PaperQuestions.question))
-            .order_by(PaperQuestions.sort_order)
-        )
-        result = await db.execute(query)
-        return result.scalars().all()
-
-    @staticmethod
     async def update_paper(
         qpid: int,
         paper_in: QuestionPaperUpdate,
         current_teacher: Token,
         db: AsyncSession,
     ) -> QuestionPaper:
-        query = select(QuestionPaper).where(
-            QuestionPaper.qpid == qpid, QuestionPaper.t_email == current_teacher.email
+        query = (
+            select(QuestionPaper)
+            .options(selectinload(QuestionPaper.questions))
+            .where(
+                QuestionPaper.qpid == qpid,
+                QuestionPaper.t_email == current_teacher.email,
+            )
         )
         result = await db.execute(query)
         db_paper = result.scalars().first()
 
         if not db_paper:
-            raise HTTPException(status_code=404, detail="Question paper not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Question paper not found"
+            )
 
-        update_data = paper_in.model_dump(exclude_unset=True)
+        update_data = paper_in.model_dump(exclude_unset=True, exclude={"questions"})
+
+        # Update paper fields
         for field, value in update_data.items():
             setattr(db_paper, field, value)
 
+        # Update questions if provided
+        if paper_in.questions is not None:
+            existing_questions_map = {q.qid: q for q in db_paper.questions}
+
+            incoming_qids = {q.qid for q in paper_in.questions if q.qid is not None}
+
+            # Remove questions that are not in the new incoming set
+            for old_q in list(db_paper.questions):
+                if old_q.qid not in incoming_qids:
+                    db_paper.questions.remove(old_q)
+
+            # Add or update questions
+            for q_in in paper_in.questions:
+                if q_in.qid and q_in.qid in existing_questions_map:
+                    # Update existing
+                    existing_q = existing_questions_map[q_in.qid]
+                    q_data = q_in.model_dump(exclude_unset=True, exclude={"qid"})
+                    for k, v in q_data.items():
+                        setattr(existing_q, k, v)
+                else:
+                    # Create new
+                    q_data = q_in.model_dump(exclude={"qid"})
+                    db_paper.questions.append(Question(**q_data))
+
+        total_marks = sum(
+            (q.marks_assigned for q in db_paper.questions), start=Decimal("0")
+        )
+        db_paper.total_marks = total_marks
+
         await db.commit()
         await db.refresh(db_paper)
-        return db_paper
 
-    @staticmethod
-    async def assign_question_to_paper(
-        qpid: int,
-        mapping_in: PaperQuestionCreate,
-        current_teacher: Token,
-        db: AsyncSession,
-    ) -> PaperQuestions:
-        paper_query = select(QuestionPaper).where(
-            QuestionPaper.qpid == qpid, QuestionPaper.t_email == current_teacher.email
+        result = await db.execute(
+            select(QuestionPaper)
+            .options(selectinload(QuestionPaper.questions))
+            .where(QuestionPaper.qpid == db_paper.qpid)
         )
-        paper_res = await db.execute(paper_query)
-        if not paper_res.scalars().first():
-            raise HTTPException(status_code=404, detail="Question paper not found")
-
-        question_query = select(Question).where(Question.qid == mapping_in.qid)
-        question_res = await db.execute(question_query)
-        if not question_res.scalars().first():
-            raise HTTPException(status_code=404, detail="Question not found")
-
-        db_mapping = PaperQuestions(
-            qpid=qpid,
-            qid=mapping_in.qid,
-            sort_order=mapping_in.sort_order,
-            marks_assigned=mapping_in.marks_assigned,
-        )
-        db.add(db_mapping)
-        await db.commit()
-        await db.refresh(db_mapping)
-        return db_mapping
+        return result.scalars().first()
