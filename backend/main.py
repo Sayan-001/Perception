@@ -14,11 +14,7 @@ from app.evaluations.route import router as evaluations_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This runs when the app starts
-    # Note: In production you'd use Alembic.
-    # For now, let's auto-create tables if they don't exist.
     async with engine.begin() as conn:
-        # Import models so SQLAlchemy knows about them
         import app.core.model
         import app.auth.model
         import app.papers.model
@@ -26,7 +22,8 @@ async def lifespan(app: FastAPI):
 
         await conn.run_sync(Base.metadata.create_all)
     yield
-    # This runs when the app shuts down
+
+    # shutdown
     await engine.dispose()
 
 
@@ -34,12 +31,15 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     lifespan=lifespan,
+    openapi_url="/openapi.json" if settings.ENVIRONMENT == "development" else None,
+    docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
+    redoc_url=None,
+    debug=settings.ENVIRONMENT == "development",
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update this to your frontend URL in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
