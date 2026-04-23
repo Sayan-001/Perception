@@ -12,6 +12,9 @@ from app.papers.model import QuestionPaper, Question
 from app.utils.evaluator import EvaluationService as LLMEvaluationService
 
 
+from app.auth.model import UserUsage
+
+
 class SubEvaluationService:
     @staticmethod
     async def evaluate_submission(
@@ -24,6 +27,17 @@ class SubEvaluationService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only teachers can trigger evaluation.",
+            )
+
+        # Get teacher usage
+        usage_stmt = select(UserUsage).where(UserUsage.email == current_teacher.email)
+        usage_res = await db.execute(usage_stmt)
+        teacher_usage = usage_res.scalar_one_or_none()
+
+        if teacher_usage and teacher_usage.llm_tokens_balance_monthly <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Monthly LLM token limit reached.",
             )
 
         # check paper
@@ -65,20 +79,24 @@ class SubEvaluationService:
         answers = list(a_res.scalars().all())
 
         total_marks = Decimal("0.0")
+        total_tokens_used = 0
 
         async def eval_answer(ans: Answer) -> Answer:
+            nonlocal total_tokens_used
             q = questions_map.get(ans.qid)
             if not q:
                 return ans
 
             try:
-                eval_res = await LLMEvaluationService.evaluate(
+                eval_res, tokens = await LLMEvaluationService.evaluate(
                     question=q.question_text,
                     student_answer=ans.student_answer or "",
                     max_marks=float(q.marks_assigned),
                     teacher_answer=q.model_answer,
                     rubric=q.rubric,
                 )
+
+                total_tokens_used += tokens
 
                 # The score is directly evaluated against max_marks
                 awarded = Decimal(str(eval_res.score))
@@ -103,6 +121,11 @@ class SubEvaluationService:
         submission.evaluated = True
         submission.total_marks_obtained = total_marks
         db.add(submission)
+
+        if teacher_usage:
+            teacher_usage.llm_tokens_balance_monthly -= total_tokens_used
+            teacher_usage.total_llm_tokens_used += total_tokens_used
+            db.add(teacher_usage)
 
         await db.commit()
         await db.refresh(submission)

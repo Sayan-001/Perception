@@ -39,7 +39,7 @@ class EvaluationService:
         max_marks: float,
         teacher_answer: str | None = None,
         rubric: str | None = None,
-    ) -> EvaluationResponse:
+    ) -> tuple[EvaluationResponse, int]:
         to_eval = f"Question: {question}\nTeacher's Answer: {teacher_answer or 'None provided'}\nStudent's Answer: {student_answer}\nEvaluation Rubric: {rubric or 'None provided'} \nMax Marks: {max_marks}"
 
         completion = await cls.client.chat.completions.create(
@@ -63,4 +63,6 @@ class EvaluationService:
             json_data=completion.choices[0].message.content or ""
         )
 
-        return evaluation_response
+        tokens_used = completion.usage.total_tokens if completion.usage else 0
+
+        return evaluation_response, tokens_used

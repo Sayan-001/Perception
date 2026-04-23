@@ -11,6 +11,9 @@ from app.submissions.schemas import SubmissionCreate
 from app.papers.model import QuestionPaper
 
 
+from app.auth.model import UserUsage
+
+
 class SubmissionService:
     @staticmethod
     async def create_submission(
@@ -23,6 +26,17 @@ class SubmissionService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only students can submit answers.",
+            )
+
+        # Get student usage
+        usage_stmt = select(UserUsage).where(UserUsage.email == current_user.email)
+        usage_res = await db.execute(usage_stmt)
+        student_usage = usage_res.scalar_one_or_none()
+
+        if student_usage and student_usage.submissions_made_balance_monthly <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Monthly submission limit reached.",
             )
 
         # Check if question paper exists
@@ -67,6 +81,11 @@ class SubmissionService:
             )
             db.add(answer_record)
             final_answers.append(answer_record)
+
+        if student_usage:
+            student_usage.submissions_made_balance_monthly -= 1
+            student_usage.total_submissions_made += 1
+            db.add(student_usage)
 
         await db.commit()
         await db.refresh(submission)

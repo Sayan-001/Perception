@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.model import UserType
 from app.papers.model import QuestionPaper, Question
-from app.auth.model import Association
+from app.auth.model import Association, UserUsage
 from app.auth.schemas import Token
 from app.papers.schemas import (
     QuestionPaperCreate,
@@ -20,6 +20,16 @@ class PaperService:
     async def create_paper(
         paper_in: QuestionPaperCreate, current_teacher: Token, db: AsyncSession
     ) -> QuestionPaper:
+        usage_stmt = select(UserUsage).where(UserUsage.email == current_teacher.email)
+        usage_res = await db.execute(usage_stmt)
+        teacher_usage = usage_res.scalar_one_or_none()
+
+        if teacher_usage and teacher_usage.papers_created_balance_monthly <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Monthly paper creation limit reached.",
+            )
+
         paper_data = paper_in.model_dump(exclude={"questions"})
         total_marks = sum(
             (q.marks_assigned for q in paper_in.questions), start=Decimal("0")
@@ -33,6 +43,12 @@ class PaperService:
             db_paper.questions.append(Question(**q_in.model_dump()))
 
         db.add(db_paper)
+
+        if teacher_usage:
+            teacher_usage.papers_created_balance_monthly -= 1
+            teacher_usage.total_papers_created += 1
+            db.add(teacher_usage)
+
         await db.commit()
         await db.refresh(db_paper)
 

@@ -16,7 +16,7 @@ async def test_evaluate_real_request():
     _ = time.process_time()
     real_start_time = time.time()
 
-    result = await EvaluationService.evaluate(
+    result, tokens = await EvaluationService.evaluate(
         question=question,
         student_answer=student_answer,
         max_marks=10.0,
@@ -27,6 +27,7 @@ async def test_evaluate_real_request():
     latency = time.time() - real_start_time
 
     assert isinstance(result, EvaluationResponse)
+    assert isinstance(tokens, int)
     assert 0.0 <= result.score <= 10.0
     assert isinstance(result.feedback, str)
     assert len(result.feedback) > 0
@@ -42,7 +43,7 @@ async def test_evaluate_real_request():
 @pytest.mark.asyncio
 async def test_evaluate_real_request_poor_answer():
     start_time = time.time()
-    result = await EvaluationService.evaluate(
+    result, tokens = await EvaluationService.evaluate(
         question="Explain the theory of relativity.",
         student_answer="I don't know, an apple fell on his head?",
         max_marks=10.0,
@@ -52,6 +53,7 @@ async def test_evaluate_real_request_poor_answer():
     latency = time.time() - start_time
 
     assert isinstance(result, EvaluationResponse)
+    assert isinstance(tokens, int)
     assert result.score < 5.0
 
     logger.info(
