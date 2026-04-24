@@ -4,10 +4,12 @@ import jwt
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, status
 
-from app.auth.model import AppUser, UserUsage
+from app.auth.model import AppUser, UserUsage, Association
 from app.auth.schemas import UserCreate
 from app.config import settings
+from app.core.model import UserType
 
 
 class AuthService:
@@ -68,7 +70,6 @@ class AuthService:
 
     @staticmethod
     async def delete_user(db: AsyncSession, email: str) -> None:
-        from fastapi import HTTPException, status
 
         user = await AuthService.get_user_by_email(db, email)
         if not user:
@@ -77,4 +78,42 @@ class AuthService:
             )
 
         await db.delete(user)
+        await db.commit()
+
+    @staticmethod
+    async def get_associations(db: AsyncSession, email: str, role: str) -> dict:
+        result = None
+
+        if role == UserType.teacher.value:
+            result = await db.execute(
+                select(Association.s_email).where(Association.t_email == email)
+            )
+        elif role == UserType.student.value:
+            result = await db.execute(
+                select(Association.t_email).where(Association.s_email == email)
+            )
+
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="No associations found"
+            )
+        else:
+            return {"associations": [row[0] for row in result.fetchall()]}
+
+    @staticmethod
+    async def create_association(db: AsyncSession, t_email: str, s_email: str) -> None:
+        teacher = await AuthService.get_user_by_email(db, t_email)
+        student = await AuthService.get_user_by_email(db, s_email)
+
+        if not teacher or teacher.user_type != UserType.teacher:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Teacher not found"
+            )
+        if not student or student.user_type != UserType.student:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Student not found"
+            )
+
+        association = Association(t_email=t_email, s_email=s_email)
+        db.add(association)
         await db.commit()

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.schemas import UserCreate, UserOut
 from app.auth.service import AuthService
 from app.database import get_db
-from app.auth.dependencies import get_token_data
+from app.auth.dependencies import get_token_data, get_current_teacher
 from app.auth.schemas import Token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -61,3 +61,24 @@ async def delete_user(
     current_user: Token = Depends(get_token_data),
 ):
     await AuthService.delete_user(db, email=current_user.email)
+
+
+@router.get("/associations", status_code=status.HTTP_200_OK)
+async def get_association(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Token = Depends(get_token_data),
+):
+    return await AuthService.get_associations(
+        db, email=current_user.email, role=current_user.role
+    )
+
+
+@router.post("/associations", status_code=status.HTTP_200_OK)
+async def create_association(
+    s_email: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Token = Depends(get_current_teacher),
+):
+    await AuthService.create_association(
+        db, t_email=current_user.email, s_email=s_email
+    )
