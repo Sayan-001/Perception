@@ -23,14 +23,11 @@ class AuthService:
         return cls.pwd_context.hash(password)
 
     @classmethod
-    def create_access_token(
-        cls,
-        email: str,
-        role: str,
-        expires_delta: int = settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-    ) -> str:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=expires_delta)
-        to_encode = {"exp": expire, "email": str(email), "role": role}
+    def create_access_token(cls, email: str, role: str) -> str:
+        expire_delay = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        to_encode = {"exp": expire_delay, "email": email, "role": role}
         encoded_jwt = jwt.encode(
             to_encode, settings.SECRET_KEY, algorithm=cls.ALGORITHM
         )
@@ -42,15 +39,15 @@ class AuthService:
         return result.scalar_one_or_none()
 
     @classmethod
-    async def create_user(cls, db: AsyncSession, user_in: UserCreate) -> AppUser:
+    async def create_user(cls, db: AsyncSession, user_input: UserCreate) -> AppUser:
         new_user = AppUser(
-            email=user_in.email,
-            password_hash=cls.get_password_hash(user_in.password),
-            full_name=user_in.full_name,
-            user_type=user_in.user_type,
+            email=user_input.email,
+            password_hash=cls.get_password_hash(user_input.password),
+            full_name=user_input.full_name,
+            user_type=user_input.user_type,
         )
 
-        new_usage = UserUsage(email=user_in.email)
+        new_usage = UserUsage(email=user_input.email)
 
         db.add(new_user)
         db.add(new_usage)
@@ -78,5 +75,6 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
+
         await db.delete(user)
         await db.commit()

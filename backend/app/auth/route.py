@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.schemas import UserCreate, UserOut
 from app.auth.service import AuthService
 from app.database import get_db
+from app.auth.dependencies import get_token_data
+from app.auth.schemas import Token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -57,19 +59,9 @@ async def login(
     return {"access_token": access_token}
 
 
-from app.auth.dependencies import get_token_data
-from app.auth.schemas import Token
-
-
-@router.delete("/{email}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
-    email: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Token = Depends(get_token_data),
 ):
-    if current_user.email != email:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete your own account.",
-        )
-    await AuthService.delete_user(db, email=email)
+    await AuthService.delete_user(db, email=current_user.email)
