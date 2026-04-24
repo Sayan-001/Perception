@@ -21,7 +21,6 @@ class AppUser(Base):
     user_type: Mapped[UserType] = mapped_column(SQLEnum(UserType), nullable=False)
 
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     last_login_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

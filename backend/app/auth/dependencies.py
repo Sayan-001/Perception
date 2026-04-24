@@ -45,7 +45,7 @@ async def get_current_user(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    if user.is_active is False:
+    if user.get_token_data is False:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )

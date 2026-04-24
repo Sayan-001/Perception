@@ -39,10 +39,6 @@ async def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    if user.is_active is False:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
-        )
 
     setattr(user, "last_login_at", datetime.now(timezone.utc))
     await db.commit()
