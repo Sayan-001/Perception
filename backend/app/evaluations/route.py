@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.auth.dependencies import get_current_teacher
 from app.auth.schemas import Token
-from app.submissions.schemas import SubmissionDetailTeacherOut
+from app.database import get_db
 from app.evaluations.service import SubEvaluationService
+from app.submissions.schemas import SubmissionDetailTeacherOut
 
 router = APIRouter(prefix="/api/evaluations", tags=["evaluations"])
 

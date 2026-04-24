@@ -1,14 +1,15 @@
 import jwt
-from app.auth.model import AppUser
-from app.auth.schemas import Token
-from app.config import settings
-from app.core.model import UserType
-from app.database import get_db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth.model import AppUser
+from app.auth.schemas import Token
+from app.config import settings
+from app.core.model import UserType
+from app.database import get_db
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 

@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from app.auth.model import AppUser, UserUsage
-from app.auth.schemas import UserCreate
-from app.config import settings
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth.model import AppUser, UserUsage
+from app.auth.schemas import UserCreate
+from app.config import settings
 
 
 class AuthService:

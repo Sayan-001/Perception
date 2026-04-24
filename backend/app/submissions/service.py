@@ -4,14 +4,12 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.model import UserUsage
 from app.auth.schemas import Token
 from app.core.model import UserType
+from app.papers.model import QuestionPaper
 from app.submissions.model import Answer, Submission
 from app.submissions.schemas import SubmissionCreate
-from app.papers.model import QuestionPaper
-
-
-from app.auth.model import UserUsage
 
 
 class SubmissionService:

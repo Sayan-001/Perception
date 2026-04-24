@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional, List
 from decimal import Decimal
+from typing import List, Optional
 
 from sqlalchemy import (
     Boolean,

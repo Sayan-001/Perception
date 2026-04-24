@@ -1,19 +1,20 @@
 from typing import List, Union
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.auth.dependencies import get_current_teacher, get_token_data
 from app.auth.schemas import Token
 from app.core.model import UserType
-from app.papers.service import PaperService
+from app.database import get_db
 from app.papers.schemas import (
     QuestionPaperCreate,
     QuestionPaperOut,
-    QuestionPaperTeacherOut,
     QuestionPaperStudentOut,
+    QuestionPaperTeacherOut,
     QuestionPaperUpdate,
 )
+from app.papers.service import PaperService
 
 router = APIRouter(prefix="/api/papers", tags=["papers"])
 

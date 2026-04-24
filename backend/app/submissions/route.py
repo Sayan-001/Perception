@@ -3,18 +3,18 @@ from typing import List, Union
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.auth.dependencies import get_token_data
 from app.auth.schemas import Token
 from app.core.model import UserType
-from app.submissions.service import SubmissionService
+from app.database import get_db
 from app.submissions.schemas import (
     SubmissionCreate,
-    SubmissionTeacherOut,
-    SubmissionStudentOut,
-    SubmissionDetailTeacherOut,
     SubmissionDetailStudentOut,
+    SubmissionDetailTeacherOut,
+    SubmissionStudentOut,
+    SubmissionTeacherOut,
 )
+from app.submissions.service import SubmissionService
 
 router = APIRouter(prefix="/api/submissions", tags=["submissions"])
 

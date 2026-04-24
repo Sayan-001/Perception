@@ -1,18 +1,16 @@
 from decimal import Decimal
 from typing import Sequence
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.core.model import UserType
-from app.papers.model import QuestionPaper, Question
 from app.auth.model import Association, UserUsage
 from app.auth.schemas import Token
-from app.papers.schemas import (
-    QuestionPaperCreate,
-    QuestionPaperUpdate,
-)
+from app.core.model import UserType
+from app.papers.model import Question, QuestionPaper
+from app.papers.schemas import QuestionPaperCreate, QuestionPaperUpdate
 
 
 class PaperService:

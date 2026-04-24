@@ -22,7 +22,7 @@ class AnswerBase(BaseModel):
     s_email: str
     qid: int
     student_answer: Optional[str] = None
-    marks_obtained: Decimal = Decimal('0.0')
+    marks_obtained: Decimal = Decimal("0.0")
     feedback: Optional[str] = None
     status: EvaluationStatus = EvaluationStatus.pending
     created_at: datetime
@@ -35,7 +35,7 @@ class SubmissionBase(BaseModel):
     qpid: int
     s_email: str
     evaluated: bool = False
-    total_marks_obtained: Decimal = Decimal('0.0')
+    total_marks_obtained: Decimal = Decimal("0.0")
     created_at: datetime
     updated_at: Optional[datetime] = None
 

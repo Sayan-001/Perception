@@ -5,14 +5,12 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.schemas import Token
-from app.core.model import UserType, EvaluationStatus
-from app.submissions.model import Submission, Answer
-from app.papers.model import QuestionPaper, Question
-from app.utils.evaluator import EvaluationService as LLMEvaluationService
-
-
 from app.auth.model import UserUsage
+from app.auth.schemas import Token
+from app.core.model import EvaluationStatus, UserType
+from app.papers.model import Question, QuestionPaper
+from app.submissions.model import Answer, Submission
+from app.utils.evaluator import EvaluationService as LLMEvaluationService
 
 
 class SubEvaluationService:

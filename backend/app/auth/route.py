@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from app.auth.schemas import UserCreate, UserOut
-from app.auth.service import AuthService
-from app.database import get_db
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.auth.schemas import UserCreate, UserOut
+from app.auth.service import AuthService
+from app.database import get_db
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

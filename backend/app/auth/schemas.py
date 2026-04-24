@@ -1,5 +1,6 @@
-from app.core.model import UserType
 from pydantic import BaseModel, EmailStr
+
+from app.core.model import UserType
 
 
 class Token(BaseModel):

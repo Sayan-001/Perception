@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional
 from decimal import Decimal
+from typing import Optional
 
 from sqlalchemy import Boolean, DateTime
 from sqlalchemy import Enum as SQLEnum
@@ -8,8 +8,8 @@ from sqlalchemy import ForeignKey, ForeignKeyConstraint, Integer, Numeric, Strin
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
-from app.database import Base
 from app.core.model import EvaluationStatus
+from app.database import Base
 
 
 class Submission(Base):

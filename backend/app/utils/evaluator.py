@@ -1,7 +1,7 @@
 from groq import AsyncGroq
+from pydantic import BaseModel, Field
 
 from app.config import settings
-from pydantic import BaseModel, Field
 
 SYSTEM_PROMPT = """
 ### Instructions:
