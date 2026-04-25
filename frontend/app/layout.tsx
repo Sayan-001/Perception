@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Nunito } from "next/font/google";
 import { ColorSchemeScript, MantineProvider, createTheme } from "@mantine/core";
+import { Header } from "../components/Header";
+import { Footer } from "../components/Footer";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -14,8 +16,11 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Perception | Educational Assessments",
+  title: "Perception",
   description: "AI-driven assessment and evaluation platform",
+  icons: {
+    icon: "favicon.svg",
+  },
 };
 
 const theme = createTheme({
@@ -66,9 +71,11 @@ export default function RootLayout({
       <head>
         <ColorSchemeScript defaultColorScheme="light" />
       </head>
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-screen flex flex-col font-sans">
         <MantineProvider theme={theme} defaultColorScheme="light">
-          {children}
+          <Header />
+          <main className="flex-grow flex flex-col">{children}</main>
+          <Footer />
         </MantineProvider>
       </body>
     </html>
