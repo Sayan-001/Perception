@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 
 from app.core.model import UserType
 
@@ -6,6 +7,7 @@ from app.core.model import UserType
 class Token(BaseModel):
     email: str
     role: str
+    exp: datetime
 
 
 class UserCreate(BaseModel):

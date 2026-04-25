@@ -1,4 +1,5 @@
 import jwt
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
@@ -20,10 +21,17 @@ async def get_token_data(
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         token_data = Token(**payload)
-        if token_data.email is None:
+
+        if token_data.email is None or token_data.role is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Could not validate credentials",
+            )
+
+        if token_data.exp < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has expired",
             )
         return token_data
     except (jwt.PyJWTError, ValidationError):
@@ -43,11 +51,6 @@ async def get_current_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    if user.get_token_data is False:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
 
     return user
