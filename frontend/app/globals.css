@@ -1,0 +1,24 @@
+@import "@mantine/core/styles.css";
+@import "tailwindcss";
+
+:root {
+  --brand-primary: #3b82f6; /* Royal Blue - Energy & Focus */
+  --brand-secondary: #0d9488; /* Teal - Success & Progress */
+  --background: #f8fafc; /* Canvas - Very soft gray-blue */
+  --foreground: #0f172a; /* Text - Deep slate */
+}
+
+@theme inline {
+  --color-primary: var(--brand-primary);
+  --color-secondary: var(--brand-secondary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
