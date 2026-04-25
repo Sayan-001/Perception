@@ -27,9 +27,9 @@ class SubEvaluationService:
                 detail="Only teachers can trigger evaluation.",
             )
 
-        # Get teacher usage
-        usage_stmt = select(UserUsage).where(UserUsage.email == current_teacher.email)
-        usage_res = await db.execute(usage_stmt)
+        usage_res = await db.execute(
+            select(UserUsage).where(UserUsage.email == current_teacher.email)
+        )
         teacher_usage = usage_res.scalar_one_or_none()
 
         if teacher_usage and teacher_usage.llm_tokens_balance_monthly <= 0:
@@ -38,11 +38,11 @@ class SubEvaluationService:
                 detail="Monthly LLM token limit reached.",
             )
 
-        # check paper
-        stmt_paper = select(QuestionPaper).where(QuestionPaper.qpid == qpid)
-        paper_res = await db.execute(stmt_paper)
+        paper_res = await db.execute(
+            select(QuestionPaper).where(QuestionPaper.qpid == qpid)
+        )
         paper = paper_res.scalar_one_or_none()
-        if not paper:
+        if paper is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found"
             )
@@ -53,27 +53,23 @@ class SubEvaluationService:
                 detail="You can only evaluate submissions for your own papers.",
             )
 
-        # check submission
-        stmt_sub = select(Submission).where(
-            Submission.qpid == qpid, Submission.s_email == s_email
+        sub_res = await db.execute(
+            select(Submission).where(
+                Submission.qpid == qpid, Submission.s_email == s_email
+            )
         )
-        sub_res = await db.execute(stmt_sub)
         submission = sub_res.scalar_one_or_none()
-        if not submission:
+        if submission is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found"
             )
 
-        # Get questions
-        stmt_questions = select(Question).where(Question.qpid == qpid)
-        q_res = await db.execute(stmt_questions)
+        q_res = await db.execute(select(Question).where(Question.qpid == qpid))
         questions_map = {q.qid: q for q in q_res.scalars().all()}
 
-        # Get answers
-        stmt_answers = select(Answer).where(
-            Answer.qpid == qpid, Answer.s_email == s_email
+        a_res = await db.execute(
+            select(Answer).where(Answer.qpid == qpid, Answer.s_email == s_email)
         )
-        a_res = await db.execute(stmt_answers)
         answers = list(a_res.scalars().all())
 
         total_marks = Decimal("0.0")
@@ -95,8 +91,6 @@ class SubEvaluationService:
                 )
 
                 total_tokens_used += tokens
-
-                # The score is directly evaluated against max_marks
                 awarded = Decimal(str(eval_res.score))
 
                 ans.marks_obtained = round(awarded, 2)
@@ -107,7 +101,6 @@ class SubEvaluationService:
 
             return ans
 
-        # Evaluate answers concurrently using gather
         tasks = [eval_answer(a) for a in answers]
         await asyncio.gather(*tasks)
 
@@ -131,6 +124,5 @@ class SubEvaluationService:
         for a in answers:
             await db.refresh(a)
 
-        # Attach evaluated answers returning the detailed submission out
         submission.answers = answers
         return submission
