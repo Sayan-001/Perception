@@ -94,11 +94,9 @@ class AuthService:
             )
 
         if result is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="No associations found"
-            )
-        else:
-            return {"associations": [row[0] for row in result.fetchall()]}
+            return {"associations": []}
+
+        return {"associations": [row[0] for row in result.fetchall()]}
 
     @staticmethod
     async def create_association(db: AsyncSession, t_email: str, s_email: str) -> None:
