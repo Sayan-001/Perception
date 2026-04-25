@@ -115,3 +115,17 @@ class AuthService:
         association = Association(t_email=t_email, s_email=s_email)
         db.add(association)
         await db.commit()
+
+    @staticmethod
+    async def get_usage(db: AsyncSession, email: str) -> dict:
+        result = await db.execute(select(UserUsage).where(UserUsage.email == email))
+        usage = result.scalar_one_or_none()
+        if not usage:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User usage not found"
+            )
+        return {
+            "email": usage.email,
+            "papers_created_balance": usage.papers_created_balance_monthly,
+            "llm_tokens_balance": usage.llm_tokens_balance_monthly,
+        }

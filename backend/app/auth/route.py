@@ -82,3 +82,11 @@ async def create_association(
     await AuthService.create_association(
         db, t_email=current_user.email, s_email=s_email
     )
+
+
+@router.get("/usage", status_code=status.HTTP_200_OK)
+async def get_usage(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_teacher: Token = Depends(get_current_teacher),
+) -> dict:
+    return await AuthService.get_usage(db, email=current_teacher.email)
