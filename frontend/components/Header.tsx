@@ -16,7 +16,7 @@ export function Header() {
   const [opened, { toggle }] = useDisclosure(false);
 
   return (
-    <header className="h-[60px] border-b border-gray-200 bg-white sticky top-0 z-50">
+    <header className="h-15 border-b border-gray-200 bg-white sticky top-0 z-50">
       <Container size="xl" className="h-full">
         <div className="flex justify-between items-center h-full">
           {/* Logo Section */}

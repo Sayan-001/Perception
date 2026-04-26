@@ -17,8 +17,7 @@ export function Footer() {
           </Group>
 
           <Text c="dimmed" size="sm">
-            © {new Date().getFullYear()} Perception Educational Systems. All
-            rights reserved.
+            © {new Date().getFullYear()} Perception. All rights reserved.
           </Text>
 
           <Group gap="md">

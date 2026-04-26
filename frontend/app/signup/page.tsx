@@ -12,7 +12,7 @@ export default function SignupPage() {
   return (
     <div className="flex flex-1 w-full bg-slate-50 min-h-0">
       {/* Left Content / Form Area */}
-      <div className="w-full lg:w-[480px] xl:w-[540px] flex-shrink-0 border-r border-gray-200 bg-white p-8 lg:p-12 xl:p-16 flex flex-col justify-center">
+      <div className="w-full lg:w-120 xl:w-135 shrink-0 border-r border-gray-200 bg-white p-8 lg:p-12 xl:p-16 flex flex-col justify-center">
         <Box mb={40}>
           <Title order={2} className="font-sans text-slate-800 mb-2">
             Join Perception

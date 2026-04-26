@@ -1,24 +1,20 @@
 "use client";
 
-import {
-  TextInput,
-  PasswordInput,
-  Select,
-  Checkbox,
-  Button,
-} from "@mantine/core";
+import { useRouter } from "next/navigation";
+import { TextInput, PasswordInput, Select, Button } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { AtSign, Lock, User, IdCard } from "lucide-react";
+import { useApi } from "@/lib/useApi";
+import { authAPI } from "@/lib/api";
 
 export function SignupForm() {
+  const router = useRouter();
   const form = useForm({
     initialValues: {
       fullName: "",
       email: "",
       password: "",
-      confirmPassword: "",
       role: "",
-      terms: false,
     },
 
     validate: {
@@ -26,18 +22,25 @@ export function SignupForm() {
         value.length < 2 ? "Name must have at least 2 letters" : null,
       email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
       password: (value) =>
-        value.length < 6 ? "Password must include at least 6 characters" : null,
-      confirmPassword: (value, values) =>
-        value !== values.password ? "Passwords did not match" : null,
+        value.length < 3 ? "Password must include at least 3 characters" : null,
       role: (value) => (value ? null : "Please select a role"),
-      terms: (value) =>
-        value ? null : "Please accept the terms and conditions",
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
-    console.log(values);
-    // TODO: implement signup logic
+  const { data, loading, error, execute } = useApi(authAPI.signup);
+
+  const handleSubmit = async (values: typeof form.values) => {
+    try {
+      await execute(
+        values.email,
+        values.password,
+        values.fullName,
+        values.role,
+      );
+      router.push("/login");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -81,22 +84,20 @@ export function SignupForm() {
         {...form.getInputProps("password")}
       />
 
-      <PasswordInput
-        label="Confirm Password"
-        placeholder="Repeat your password"
-        required
-        mt="md"
-        leftSection={<Lock size={16} />}
-        {...form.getInputProps("confirmPassword")}
-      />
+      {error && (
+        <div className="text-red-500 text-sm mt-4 text-center">
+          Failed to create account! Please check your information and try again.
+        </div>
+      )}
 
-      <Checkbox
-        label="I agree to the terms and conditions"
+      <Button
+        fullWidth
         mt="xl"
-        {...form.getInputProps("terms", { type: "checkbox" })}
-      />
-
-      <Button fullWidth mt="xl" type="submit" color="teal">
+        type="submit"
+        color="teal"
+        disabled={loading}
+        loading={loading}
+      >
         Create Account
       </Button>
     </form>

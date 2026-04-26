@@ -1,18 +1,14 @@
 "use client";
 
-import {
-  TextInput,
-  PasswordInput,
-  Checkbox,
-  Anchor,
-  Group,
-  Button,
-} from "@mantine/core";
+import { useRouter } from "next/navigation";
+import { TextInput, PasswordInput, Button } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { AtSign, Lock } from "lucide-react";
-import Link from "next/link";
+import { useApi } from "@/lib/useApi";
+import { authAPI } from "@/lib/api";
 
 export function LoginForm() {
+  const router = useRouter();
   const form = useForm({
     initialValues: {
       email: "",
@@ -23,13 +19,20 @@ export function LoginForm() {
     validate: {
       email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
       password: (value) =>
-        value.length < 6 ? "Password must include at least 6 characters" : null,
+        value.length < 3 ? "Password must include at least 3 characters" : null,
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
-    console.log(values);
-    // TODO: implement logic and auth
+  const { data, loading, error, execute } = useApi(authAPI.login);
+
+  const handleSubmit = async (values: typeof form.values) => {
+    try {
+      await execute(values.email, values.password);
+      localStorage.setItem("authToken", data?.access_token);
+      router.push("/dashboard");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -49,16 +52,21 @@ export function LoginForm() {
         leftSection={<Lock size={16} />}
         {...form.getInputProps("password")}
       />
-      <Group justify="space-between" mt="lg">
-        <Checkbox
-          label="Remember me"
-          {...form.getInputProps("remember", { type: "checkbox" })}
-        />
-        <Anchor component={Link} href="/forgot-password" size="sm" c="blue">
-          Forgot password?
-        </Anchor>
-      </Group>
-      <Button fullWidth mt="xl" type="submit" color="blue">
+
+      {error && (
+        <div className="text-red-500 text-sm mt-4 text-center">
+          Failed to login! Please check your credentials and try again.
+        </div>
+      )}
+
+      <Button
+        fullWidth
+        mt="xl"
+        type="submit"
+        color="blue"
+        loading={loading}
+        disabled={loading}
+      >
         Sign in
       </Button>
     </form>
