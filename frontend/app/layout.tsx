@@ -74,7 +74,7 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col font-sans">
         <MantineProvider theme={theme} defaultColorScheme="light">
           <Header />
-          <main className="flex-grow flex flex-col">{children}</main>
+          <main className="grow flex flex-col">{children}</main>
           <Footer />
         </MantineProvider>
       </body>

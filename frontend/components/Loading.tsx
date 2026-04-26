@@ -24,7 +24,7 @@ export function Loading({
 
   if (variant === "centered") {
     return (
-      <div className="flex justify-center items-center p-4 w-full h-full min-h-[100px]">
+      <div className="flex justify-center items-center p-4 w-full h-full min-h-25">
         {spinner}
       </div>
     );
