@@ -23,7 +23,7 @@ export function LoginForm() {
     },
   });
 
-  const { data, loading, error, execute } = useApi(authAPI.login);
+  const { data, loading, error, execute } = useApi(authAPI.logIn);
 
   const handleSubmit = async (values: typeof form.values) => {
     try {

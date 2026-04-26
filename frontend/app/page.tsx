@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import { Check } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const benefits = [
@@ -24,6 +25,14 @@ export default function Home() {
     "Seamless integration with your workflow",
     "Scale evaluations without manual effort",
   ];
+
+  const [hasToken, setHasToken] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setHasToken(localStorage.getItem("authToken") !== null);
+  }, []);
 
   return (
     <Container size="lg" py={{ base: 60, md: 120 }}>
@@ -58,7 +67,12 @@ export default function Home() {
           </List>
 
           <Group mt={40}>
-            <Button size="lg" radius="xl" component={Link} href="/signup">
+            <Button
+              size="lg"
+              radius="xl"
+              component={Link}
+              href={mounted && hasToken ? "/dashboard" : "/signup"}
+            >
               Get Started
             </Button>
             <Button

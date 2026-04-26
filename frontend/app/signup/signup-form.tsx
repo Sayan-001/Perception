@@ -27,7 +27,7 @@ export function SignupForm() {
     },
   });
 
-  const { data, loading, error, execute } = useApi(authAPI.signup);
+  const { data, loading, error, execute } = useApi(authAPI.signUp);
 
   const handleSubmit = async (values: typeof form.values) => {
     try {
