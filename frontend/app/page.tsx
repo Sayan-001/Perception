@@ -7,48 +7,23 @@ import {
   Button,
   Group,
   Text,
+  SimpleGrid,
   List,
   ThemeIcon,
   rem,
-  SimpleGrid,
 } from "@mantine/core";
-import { Brain, FileText, ShieldCheck } from "lucide-react";
+import { Check } from "lucide-react";
 import Link from "next/link";
 
-const mockdata = [
-  {
-    title: "Automated Evaluations",
-    description:
-      "Leverage advanced AI evaluators to instantly grade and provide rich, structured feedback on complex paper submissions with high accuracy.",
-    icon: Brain,
-  },
-  {
-    title: "Seamless Submissions",
-    description:
-      "Effortlessly manage exams, research papers, and student submissions through an intuitive, organized, and unified interface.",
-    icon: FileText,
-  },
-  {
-    title: "Secure & Reliable",
-    description:
-      "Built with solid authentication and privacy at its core, ensuring all your academic data and assessments remain strictly confidential.",
-    icon: ShieldCheck,
-  },
-];
-
 export default function Home() {
-  const items = mockdata.map((feature) => (
-    <List.Item
-      key={feature.title}
-      icon={
-        <ThemeIcon size={24} radius="xl" color="blue">
-          <feature.icon size={rem(14)} />
-        </ThemeIcon>
-      }
-    >
-      <b>{feature.title}</b> – {feature.description}
-    </List.Item>
-  ));
+  const benefits = [
+    "Instant AI-powered grading and feedback",
+    "Support for papers, exams, and submissions",
+    "Detailed evaluation reports and analytics",
+    "Secure and privacy-first architecture",
+    "Seamless integration with your workflow",
+    "Scale evaluations without manual effort",
+  ];
 
   return (
     <Container size="lg" py={{ base: 60, md: 120 }}>
@@ -67,22 +42,33 @@ export default function Home() {
             professionals to evaluate at scale.
           </Text>
 
-          <List mt={30} spacing="md" size="sm">
-            {items}
+          <List
+            mt={30}
+            spacing="md"
+            size="sm"
+            icon={
+              <ThemeIcon size={24} radius="xl" color="blue" variant="light">
+                <Check size={rem(14)} />
+              </ThemeIcon>
+            }
+          >
+            {benefits.map((benefit) => (
+              <List.Item key={benefit}>{benefit}</List.Item>
+            ))}
           </List>
 
           <Group mt={40}>
             <Button size="lg" radius="xl" component={Link} href="/signup">
-              Get started
+              Get Started
             </Button>
             <Button
               size="lg"
               variant="default"
               radius="xl"
               component={Link}
-              href="/login"
+              href="/features"
             >
-              Login
+              Learn More
             </Button>
           </Group>
         </div>

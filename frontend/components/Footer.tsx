@@ -22,19 +22,13 @@ export function Footer() {
 
           <Group gap="md">
             <Link
-              href="#"
-              className="text-slate-500 hover:text-slate-800 text-sm"
-            >
-              Terms
-            </Link>
-            <Link
-              href="#"
+              href="/privacy"
               className="text-slate-500 hover:text-slate-800 text-sm"
             >
               Privacy
             </Link>
             <Link
-              href="#"
+              href="/support"
               className="text-slate-500 hover:text-slate-800 text-sm"
             >
               Support
