@@ -80,6 +80,20 @@ async def create_association(
     )
 
 
+@router.get("/me", response_model=UserOut, status_code=status.HTTP_200_OK)
+async def get_current_user(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Token = Depends(get_token_data),
+):
+    user = await AuthService.get_user_by_email(db, email=current_user.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return user
+
+
 @router.get("/usage", status_code=status.HTTP_200_OK)
 async def get_usage(
     db: Annotated[AsyncSession, Depends(get_db)],
