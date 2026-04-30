@@ -15,7 +15,7 @@ export default function PapersPage() {
             Manage your question papers and submissions here.
           </Text>
         </div>
-        <Link href="/create-paper">
+        <Link href="/paper/create">
           <Button>Create Paper</Button>
         </Link>
       </div>
