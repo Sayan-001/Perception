@@ -4,10 +4,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.schemas import UserCreate, UserOut, UserLogin, Token
+from app.auth.dependencies import get_current_teacher, get_token_data
+from app.auth.schemas import Token, UserCreate, UserLogin, UserOut
 from app.auth.service import AuthService
 from app.database import get_db
-from app.auth.dependencies import get_token_data, get_current_teacher
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -59,7 +59,7 @@ async def delete_user(
     await AuthService.delete_user(db, email=current_user.email)
 
 
-@router.get("/associations", status_code=status.HTTP_200_OK)
+@router.get("/associations", response_model=dict, status_code=status.HTTP_200_OK)
 async def get_association(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Token = Depends(get_token_data),
@@ -69,29 +69,26 @@ async def get_association(
     )
 
 
-@router.post("/associations", status_code=status.HTTP_200_OK)
+@router.post("/associations", status_code=status.HTTP_201_CREATED)
 async def create_association(
     s_email: str,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Token = Depends(get_current_teacher),
 ):
-    await AuthService.create_association(
+    return await AuthService.create_association(
         db, t_email=current_user.email, s_email=s_email
     )
 
 
-@router.get("/me", response_model=UserOut, status_code=status.HTTP_200_OK)
-async def get_current_user(
+@router.get("/me", response_model=dict, status_code=status.HTTP_200_OK)
+async def get_current_user_details(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Token = Depends(get_token_data),
 ):
-    user = await AuthService.get_user_by_email(db, email=current_user.email)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    return user
+    """
+    Get comprehensive user details including profile info and usage statistics.
+    """
+    return await AuthService.get_user_details(db, email=current_user.email)
 
 
 @router.get("/usage", status_code=status.HTTP_200_OK)

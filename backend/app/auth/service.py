@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta, timezone
 
 import jwt
+from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
 
-from app.auth.model import AppUser, UserUsage, Association
+from app.auth.model import AppUser, Association, UserUsage
 from app.auth.schemas import UserCreate
 from app.config import settings
 from app.core.model import UserType
@@ -86,20 +86,41 @@ class AuthService:
 
         if role == UserType.teacher.value:
             result = await db.execute(
-                select(Association.s_email).where(Association.t_email == email)
+                select(AppUser).where(
+                    AppUser.email.in_(
+                        select(Association.s_email).where(Association.t_email == email)
+                    )
+                )
             )
         elif role == UserType.student.value:
             result = await db.execute(
-                select(Association.t_email).where(Association.s_email == email)
+                select(AppUser).where(
+                    AppUser.email.in_(
+                        select(Association.t_email).where(Association.s_email == email)
+                    )
+                )
             )
 
         if result is None:
             return {"associations": []}
 
-        return {"associations": [row[0] for row in result.fetchall()]}
+        users = result.scalars().all()
+        associations_data = []
+        for user in users:
+            associations_data.append(
+                {
+                    "email": user.email,
+                    "full_name": user.full_name,
+                    "user_type": user.user_type.value
+                    if hasattr(user.user_type, "value")
+                    else str(user.user_type),
+                    "is_verified": user.is_verified,
+                }
+            )
+        return {"associations": associations_data}
 
     @staticmethod
-    async def create_association(db: AsyncSession, t_email: str, s_email: str) -> None:
+    async def create_association(db: AsyncSession, t_email: str, s_email: str) -> dict:
         teacher = await AuthService.get_user_by_email(db, t_email)
         student = await AuthService.get_user_by_email(db, s_email)
 
@@ -115,6 +136,24 @@ class AuthService:
         association = Association(t_email=t_email, s_email=s_email)
         db.add(association)
         await db.commit()
+        await db.refresh(association)
+
+        return {
+            "teacher": {
+                "email": teacher.email,
+                "full_name": teacher.full_name,
+                "user_type": teacher.user_type.value
+                if hasattr(teacher.user_type, "value")
+                else str(teacher.user_type),
+            },
+            "student": {
+                "email": student.email,
+                "full_name": student.full_name,
+                "user_type": student.user_type.value
+                if hasattr(student.user_type, "value")
+                else str(student.user_type),
+            },
+        }
 
     @staticmethod
     async def get_usage(db: AsyncSession, email: str) -> dict:
@@ -128,4 +167,64 @@ class AuthService:
             "email": usage.email,
             "papers_created_balance": usage.papers_created_balance_monthly,
             "llm_tokens_balance": usage.llm_tokens_balance_monthly,
+        }
+
+    @staticmethod
+    async def get_user_details(db: AsyncSession, email: str) -> dict:
+        """
+        Get comprehensive user details including profile, usage, and statistics.
+        """
+        user = await AuthService.get_user_by_email(db, email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+
+        # Get usage stats
+        usage_result = await db.execute(
+            select(UserUsage).where(UserUsage.email == email)
+        )
+        usage = usage_result.scalar_one_or_none()
+
+        # Get association counts
+        if user.user_type == UserType.teacher:
+            # Count students associated with this teacher
+            assoc_result = await db.execute(
+                select(Association).where(Association.t_email == email)
+            )
+            association_count = len(assoc_result.scalars().all())
+        else:
+            # Count teachers associated with this student
+            assoc_result = await db.execute(
+                select(Association).where(Association.s_email == email)
+            )
+            association_count = len(assoc_result.scalars().all())
+
+        return {
+            "profile": {
+                "email": user.email,
+                "full_name": user.full_name,
+                "user_type": user.user_type.value
+                if hasattr(user.user_type, "value")
+                else str(user.user_type),
+                "is_verified": user.is_verified,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+            },
+            "usage": {
+                "total_papers_created": usage.total_papers_created if usage else 0,
+                "total_submissions_made": usage.total_submissions_made if usage else 0,
+                "total_llm_tokens_used": usage.total_llm_tokens_used if usage else 0,
+                "papers_created_balance_monthly": usage.papers_created_balance_monthly
+                if usage
+                else 0,
+                "submissions_made_balance_monthly": usage.submissions_made_balance_monthly
+                if usage
+                else 0,
+                "llm_tokens_balance_monthly": usage.llm_tokens_balance_monthly
+                if usage
+                else 0,
+                "last_reset_date": usage.last_reset_date.isoformat() if usage else None,
+            },
+            "statistics": {"association_count": association_count},
         }

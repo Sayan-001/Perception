@@ -1,14 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { TextInput, PasswordInput, Button } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { AtSign, Lock } from "lucide-react";
-import { useApi } from "@/lib/useApi";
-import { authAPI } from "@/lib/api";
+import axiosClient from "@/lib/axiosClient";
 
 export function LoginForm() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  
   const form = useForm({
     initialValues: {
       email: "",
@@ -23,15 +26,21 @@ export function LoginForm() {
     },
   });
 
-  const { data, loading, error, execute } = useApi(authAPI.logIn);
-
   const handleSubmit = async (values: typeof form.values) => {
+    setLoading(true);
+    setError(false);
     try {
-      await execute(values.email, values.password);
-      localStorage.setItem("authToken", data?.access_token);
+      const response = await axiosClient.post("/auth/login", {
+        email: values.email,
+        password: values.password,
+      });
+      localStorage.setItem("authToken", response.data?.access_token);
       router.push("/dashboard");
     } catch (err) {
       console.error(err);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
   };
 

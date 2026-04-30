@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: "Perception",
   description: "AI-driven assessment and evaluation platform",
   icons: {
-    icon: "favicon.svg",
+    icon: "/favicon.svg",
   },
 };
 
